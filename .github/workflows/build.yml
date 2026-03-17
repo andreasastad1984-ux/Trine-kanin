@@ -26,6 +26,9 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/trine/kanin
 
+          echo "android.useAndroidX=true" > gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+
           echo "<h1>Trines kaninguide</h1>" > app/src/main/assets/index.html
 
           cat <<EOF > settings.gradle
