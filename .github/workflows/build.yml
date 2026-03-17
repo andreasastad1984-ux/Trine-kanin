@@ -23,21 +23,40 @@ jobs:
       - name: Create project
         run: |
           mkdir -p app/src/main/assets
+
           echo "<h1>Trines kaninguide</h1>" > app/src/main/assets/index.html
 
           cat <<EOF > settings.gradle
+          pluginManagement {
+            repositories {
+              google()
+              mavenCentral()
+              gradlePluginPortal()
+            }
+          }
           rootProject.name="app"
           include(":app")
           EOF
 
+          cat <<EOF > build.gradle
+          plugins {
+            id 'com.android.application' version '8.2.2' apply false
+          }
+          EOF
+
           cat <<EOF > app/build.gradle
-          apply plugin: 'com.android.application'
+          plugins {
+            id 'com.android.application'
+          }
+
           android {
-            compileSdkVersion 34
+            namespace "com.trine.kanin"
+            compileSdk 34
+
             defaultConfig {
               applicationId "com.trine.kanin"
-              minSdkVersion 24
-              targetSdkVersion 34
+              minSdk 24
+              targetSdk 34
               versionCode 1
               versionName "1.0"
             }
