@@ -68,8 +68,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 13
-              versionName "13.0"
+              versionCode 14
+              versionName "14.0"
             }
 
             buildTypes {
@@ -92,6 +92,9 @@ jobs:
                   android:icon="@mipmap/ic_launcher"
                   android:roundIcon="@mipmap/ic_launcher"
                   android:theme="@style/AppTheme">
+                  <activity
+                      android:name=".DetailActivity"
+                      android:exported="false" />
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
@@ -155,7 +158,7 @@ jobs:
           package com.trine.kanin;
 
           import android.app.Activity;
-          import android.app.AlertDialog;
+          import android.content.Intent;
           import android.content.SharedPreferences;
           import android.graphics.Color;
           import android.graphics.Typeface;
@@ -204,7 +207,6 @@ jobs:
               private final int PINK = Color.parseColor("#F9DDE3");
               private final int PEACH = Color.parseColor("#FDE8D7");
               private final int SAGE = Color.parseColor("#E4F0E8");
-              private final int SAND = Color.parseColor("#F3ECE3");
               private final int LAV = Color.parseColor("#EEE7F8");
               private final int ACCENT = Color.parseColor("#B96E7B");
               private final int GOLD = Color.parseColor("#FFF0B8");
@@ -214,7 +216,6 @@ jobs:
               private final int GOLD_BORDER = Color.parseColor("#E0C56E");
               private final int RESULT_BG = Color.parseColor("#FFFDF5");
               private final int IMAGE_BG = Color.parseColor("#FFF6FB");
-              private final int CTA_BG = Color.parseColor("#F7F1EB");
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -243,7 +244,7 @@ jobs:
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Ekstrem versjon med søk, forslag, favoritter, detaljsider, quiz og bedre kalkulator.");
+                  subtitle.setText("Kort oversikt på forsiden. Full info på egen detaljside.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -274,7 +275,7 @@ jobs:
                   hsv.setHorizontalScrollBarEnabled(false);
                   LinearLayout filterRow = new LinearLayout(this);
                   filterRow.setOrientation(LinearLayout.HORIZONTAL);
-                  filterRow.setPadding(0, 0, dp(24), 0);
+                  filterRow.setPadding(0, 0, dp(28), 0);
                   hsv.addView(filterRow);
                   root.addView(hsv, matchWrap(dp(12)));
 
@@ -341,7 +342,7 @@ jobs:
 
                   LinearLayout row = new LinearLayout(this);
                   row.setOrientation(LinearLayout.HORIZONTAL);
-                  row.setPadding(0, 0, dp(20), 0);
+                  row.setPadding(0, 0, dp(28), 0);
                   hsv.addView(row);
 
                   String[] chips = new String[]{"Familievennlig", "Rolig", "Mye stell", "Stor", "Liten"};
@@ -352,6 +353,7 @@ jobs:
                       b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                       b.setTextColor(TITLE);
                       b.setBackground(makeRounded(Color.parseColor("#FFF7F1"), 18, BORDER, 2));
+
                       LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                               ViewGroup.LayoutParams.WRAP_CONTENT,
                               ViewGroup.LayoutParams.WRAP_CONTENT
@@ -413,7 +415,7 @@ jobs:
                           searchInput.setText(breed.name);
                           searchInput.setSelection(breed.name.length());
                           suggestionBox.setVisibility(View.GONE);
-                          showBreedDetail(breed);
+                          openDetail(breed);
                       });
 
                       suggestionBox.addView(item);
@@ -716,7 +718,6 @@ jobs:
                   title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
-                  title.setOnClickListener(v -> showBreedDetail(breed));
                   left.addView(title);
 
                   TextView meta = new TextView(this);
@@ -752,7 +753,7 @@ jobs:
                   imageHolder.setOrientation(LinearLayout.VERTICAL);
                   imageHolder.setGravity(Gravity.CENTER);
                   imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
-                  imageHolder.setPadding(dp(12), dp(28), dp(12), dp(28));
+                  imageHolder.setPadding(dp(12), dp(26), dp(12), dp(26));
                   LinearLayout.LayoutParams imgLp = matchWrap(0);
                   imgLp.topMargin = dp(14);
                   imageHolder.setLayoutParams(imgLp);
@@ -765,77 +766,39 @@ jobs:
 
                   card.addView(imageHolder);
 
-                  addLabelValue(card, "Temperament", breed.temperament);
-                  addLabelValue(card, "Vanlige farger", breed.colors);
-                  addLabelValue(card, "Reproduksjon", breed.reproduction);
-
-                  addBox(card, "Fordeler", breed.pros, SAGE);
-                  addBox(card, "Ulemper", breed.cons, PINK);
-                  addBox(card, "Hva rasen krever", breed.needs, SAND);
+                  TextView shortInfo = new TextView(this);
+                  shortInfo.setText(breed.shortSummary());
+                  shortInfo.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  shortInfo.setTextColor(TEXT);
+                  shortInfo.setPadding(0, dp(14), 0, 0);
+                  card.addView(shortInfo);
 
                   Button details = new Button(this);
                   details.setText("Åpne detaljside →");
                   details.setAllCaps(false);
-                  details.setBackground(makeRounded(CTA_BG, 18, BORDER, 2));
+                  details.setBackground(makeRounded(Color.parseColor("#F7F1EB"), 18, BORDER, 2));
                   details.setTextColor(TITLE);
                   LinearLayout.LayoutParams detailsLp = matchWrap(0);
                   detailsLp.topMargin = dp(14);
                   card.addView(details, detailsLp);
-                  details.setOnClickListener(v -> showBreedDetail(breed));
+                  details.setOnClickListener(v -> openDetail(breed));
 
                   return card;
               }
 
-              private void showBreedDetail(RabbitBreed breed) {
-                  ScrollView scroll = new ScrollView(this);
-                  LinearLayout wrapper = new LinearLayout(this);
-                  wrapper.setOrientation(LinearLayout.VERTICAL);
-                  wrapper.setPadding(dp(10), dp(10), dp(10), dp(10));
-
-                  LinearLayout imageHolder = new LinearLayout(this);
-                  imageHolder.setOrientation(LinearLayout.VERTICAL);
-                  imageHolder.setGravity(Gravity.CENTER);
-                  imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
-                  imageHolder.setPadding(dp(12), dp(28), dp(12), dp(28));
-
-                  TextView bunny = new TextView(this);
-                  bunny.setText("🐇");
-                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
-                  bunny.setGravity(Gravity.CENTER);
-                  imageHolder.addView(bunny);
-
-                  TextView imgText = new TextView(this);
-                  imgText.setText("Bilde kommer i senere versjon");
-                  imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                  imgText.setTextColor(SOFT_TEXT);
-                  imgText.setPadding(0, dp(8), 0, 0);
-                  imageHolder.addView(imgText);
-
-                  wrapper.addView(imageHolder);
-
-                  TextView info = new TextView(this);
-                  info.setText(
-                          "Størrelse: " + breed.size + "\n" +
-                          "Vekt: " + breed.weight + "\n\n" +
-                          "Temperament:\n" + breed.temperament + "\n\n" +
-                          "Vanlige farger:\n" + breed.colors + "\n\n" +
-                          "Reproduksjon:\n" + breed.reproduction + "\n\n" +
-                          "Fordeler:\n" + breed.pros + "\n\n" +
-                          "Ulemper:\n" + breed.cons + "\n\n" +
-                          "Hva rasen krever:\n" + breed.needs
-                  );
-                  info.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                  info.setTextColor(TITLE);
-                  info.setPadding(0, dp(14), 0, 0);
-                  wrapper.addView(info);
-
-                  scroll.addView(wrapper);
-
-                  new AlertDialog.Builder(this)
-                          .setTitle(breed.name)
-                          .setView(scroll)
-                          .setPositiveButton("Lukk", null)
-                          .show();
+              private void openDetail(RabbitBreed breed) {
+                  Intent intent = new Intent(this, DetailActivity.class);
+                  intent.putExtra("name", breed.name);
+                  intent.putExtra("size", breed.size);
+                  intent.putExtra("weight", breed.weight);
+                  intent.putExtra("tag", breed.tag);
+                  intent.putExtra("temperament", breed.temperament);
+                  intent.putExtra("colors", breed.colors);
+                  intent.putExtra("reproduction", breed.reproduction);
+                  intent.putExtra("pros", breed.pros);
+                  intent.putExtra("cons", breed.cons);
+                  intent.putExtra("needs", breed.needs);
+                  startActivity(intent);
               }
 
               private View makeBadge(String text, int bg) {
@@ -853,52 +816,6 @@ jobs:
                   lp.rightMargin = dp(8);
                   tv.setLayoutParams(lp);
                   return tv;
-              }
-
-              private void addLabelValue(LinearLayout parent, String label, String value) {
-                  TextView l = new TextView(this);
-                  l.setText(label);
-                  l.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
-                  l.setTypeface(Typeface.DEFAULT_BOLD);
-                  l.setTextColor(TITLE);
-                  l.setPadding(0, dp(12), 0, dp(4));
-                  parent.addView(l);
-
-                  TextView v = new TextView(this);
-                  v.setText(value);
-                  v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                  v.setTextColor(TEXT);
-                  parent.addView(v);
-              }
-
-              private void addBox(LinearLayout parent, String titleText, String body, int bgColor) {
-                  LinearLayout box = new LinearLayout(this);
-                  box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 22, 0, 0));
-                  box.setPadding(dp(14), dp(14), dp(14), dp(14));
-
-                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                          ViewGroup.LayoutParams.MATCH_PARENT,
-                          ViewGroup.LayoutParams.WRAP_CONTENT
-                  );
-                  lp.topMargin = dp(12);
-                  box.setLayoutParams(lp);
-
-                  TextView title = new TextView(this);
-                  title.setText(titleText);
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
-                  title.setTypeface(Typeface.DEFAULT_BOLD);
-                  title.setTextColor(TITLE);
-                  box.addView(title);
-
-                  TextView text = new TextView(this);
-                  text.setText(body);
-                  text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                  text.setTextColor(TEXT);
-                  text.setPadding(0, dp(8), 0, 0);
-                  box.addView(text);
-
-                  parent.addView(box);
               }
 
               private void addInfoCard(String heading, String[] lines, int bgColor) {
@@ -1079,11 +996,218 @@ jobs:
                       this.cons = cons;
                       this.needs = needs;
                   }
+
                   String searchText() {
                       return (name + " " + size + " " + weight + " " + tag + " " + temperament + " " +
                               colors + " " + reproduction + " " + pros + " " + cons + " " + needs)
                               .toLowerCase(Locale.ROOT);
                   }
+
+                  String shortSummary() {
+                      return temperament + " Passer for deg som vil ha en " +
+                              size.toLowerCase(Locale.ROOT) + " rase med " +
+                              tag.toLowerCase(Locale.ROOT) + ".";
+                  }
+              }
+          }
+          EOF
+
+          cat <<'EOF' > app/src/main/java/com/trine/kanin/DetailActivity.java
+          package com.trine.kanin;
+
+          import android.app.Activity;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.os.Bundle;
+          import android.util.TypedValue;
+          import android.view.Gravity;
+          import android.view.ViewGroup;
+          import android.widget.LinearLayout;
+          import android.widget.ScrollView;
+          import android.widget.TextView;
+
+          public class DetailActivity extends Activity {
+
+              private final int BG = Color.parseColor("#FFF9F5");
+              private final int CARD = Color.parseColor("#FFFFFF");
+              private final int TITLE = Color.parseColor("#2F2A2A");
+              private final int TEXT = Color.parseColor("#5B5451");
+              private final int SOFT_TEXT = Color.parseColor("#7C726C");
+              private final int PINK = Color.parseColor("#F9DDE3");
+              private final int SAGE = Color.parseColor("#E4F0E8");
+              private final int SAND = Color.parseColor("#F3ECE3");
+              private final int LAV = Color.parseColor("#EEE7F8");
+              private final int BORDER = Color.parseColor("#E9DED3");
+              private final int IMAGE_BG = Color.parseColor("#FFF6FB");
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  String name = getIntent().getStringExtra("name");
+                  String size = getIntent().getStringExtra("size");
+                  String weight = getIntent().getStringExtra("weight");
+                  String tag = getIntent().getStringExtra("tag");
+                  String temperament = getIntent().getStringExtra("temperament");
+                  String colors = getIntent().getStringExtra("colors");
+                  String reproduction = getIntent().getStringExtra("reproduction");
+                  String pros = getIntent().getStringExtra("pros");
+                  String cons = getIntent().getStringExtra("cons");
+                  String needs = getIntent().getStringExtra("needs");
+
+                  ScrollView scrollView = new ScrollView(this);
+                  scrollView.setBackgroundColor(BG);
+
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(dp(16), dp(16), dp(16), dp(24));
+
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setPadding(dp(18), dp(18), dp(18), dp(18));
+                  card.setBackground(makeRounded(CARD, 28, BORDER, 2));
+
+                  TextView title = new TextView(this);
+                  title.setText(name);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  card.addView(title);
+
+                  TextView meta = new TextView(this);
+                  meta.setText(size + " • " + weight);
+                  meta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  meta.setTextColor(TEXT);
+                  meta.setPadding(0, dp(6), 0, dp(10));
+                  card.addView(meta);
+
+                  LinearLayout badges = new LinearLayout(this);
+                  badges.setOrientation(LinearLayout.HORIZONTAL);
+                  badges.addView(makeBadge(size, LAV));
+                  badges.addView(makeBadge(tag, SAGE));
+                  card.addView(badges);
+
+                  LinearLayout imageHolder = new LinearLayout(this);
+                  imageHolder.setOrientation(LinearLayout.VERTICAL);
+                  imageHolder.setGravity(Gravity.CENTER);
+                  imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
+                  imageHolder.setPadding(dp(12), dp(30), dp(12), dp(30));
+
+                  LinearLayout.LayoutParams imgLp = matchWrap(0);
+                  imgLp.topMargin = dp(16);
+                  imageHolder.setLayoutParams(imgLp);
+
+                  TextView bunny = new TextView(this);
+                  bunny.setText("🐇");
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
+                  imageHolder.addView(bunny);
+
+                  TextView imgText = new TextView(this);
+                  imgText.setText("Bilde kommer senere");
+                  imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                  imgText.setTextColor(SOFT_TEXT);
+                  imgText.setPadding(0, dp(8), 0, 0);
+                  imageHolder.addView(imgText);
+
+                  card.addView(imageHolder);
+
+                  addLabelValue(card, "Temperament", temperament);
+                  addLabelValue(card, "Vanlige farger", colors);
+                  addLabelValue(card, "Reproduksjon", reproduction);
+
+                  addBox(card, "Fordeler", pros, SAGE);
+                  addBox(card, "Ulemper", cons, PINK);
+                  addBox(card, "Hva rasen krever", needs, SAND);
+
+                  root.addView(card);
+                  scrollView.addView(root);
+                  setContentView(scrollView);
+              }
+
+              private ViewGroup makeBadge(String text, int bg) {
+                  TextView tv = new TextView(this);
+                  tv.setText(text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                  tv.setTextColor(TITLE);
+                  tv.setPadding(dp(10), dp(6), dp(10), dp(6));
+                  tv.setBackground(makeRounded(bg, 18, 0, 0));
+
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.WRAP_CONTENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.rightMargin = dp(8);
+                  tv.setLayoutParams(lp);
+                  return tv;
+              }
+
+              private void addLabelValue(LinearLayout parent, String label, String value) {
+                  TextView l = new TextView(this);
+                  l.setText(label);
+                  l.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                  l.setTypeface(Typeface.DEFAULT_BOLD);
+                  l.setTextColor(TITLE);
+                  l.setPadding(0, dp(14), 0, dp(4));
+                  parent.addView(l);
+
+                  TextView v = new TextView(this);
+                  v.setText(value);
+                  v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  v.setTextColor(TEXT);
+                  parent.addView(v);
+              }
+
+              private void addBox(LinearLayout parent, String titleText, String body, int bgColor) {
+                  LinearLayout box = new LinearLayout(this);
+                  box.setOrientation(LinearLayout.VERTICAL);
+                  box.setBackground(makeRounded(bgColor, 22, 0, 0));
+                  box.setPadding(dp(14), dp(14), dp(14), dp(14));
+
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.topMargin = dp(12);
+                  box.setLayoutParams(lp);
+
+                  TextView title = new TextView(this);
+                  title.setText(titleText);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  box.addView(title);
+
+                  TextView text = new TextView(this);
+                  text.setText(body);
+                  text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  text.setTextColor(TEXT);
+                  text.setPadding(0, dp(8), 0, 0);
+                  box.addView(text);
+
+                  parent.addView(box);
+              }
+
+              private GradientDrawable makeRounded(int color, int radiusDp, int strokeColor, int strokeDp) {
+                  GradientDrawable d = new GradientDrawable();
+                  d.setColor(color);
+                  d.setCornerRadius(dp(radiusDp));
+                  if (strokeDp > 0) d.setStroke(dp(strokeDp), strokeColor);
+                  return d;
+              }
+
+              private LinearLayout.LayoutParams matchWrap(int bottomMarginDp) {
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.bottomMargin = dp(bottomMarginDp);
+                  return lp;
+              }
+
+              private int dp(int value) {
+                  float density = getResources().getDisplayMetrics().density;
+                  return Math.round(value * density);
               }
           }
           EOF
