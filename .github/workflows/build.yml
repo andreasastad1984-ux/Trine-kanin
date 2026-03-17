@@ -66,8 +66,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 5
-              versionName "5.0"
+              versionCode 6
+              versionName "6.0"
             }
 
             buildTypes {
@@ -86,7 +86,7 @@ jobs:
           cat <<EOF > app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
-                  android:label="Trines kaninguide"
+                  android:label="Kaninguide"
                   android:theme="@android:style/Theme.Material.Light.NoActionBar">
                   <activity
                       android:name=".MainActivity"
@@ -102,11 +102,11 @@ jobs:
 
           cat <<EOF > app/src/main/res/values/strings.xml
           <resources>
-              <string name="app_name">Trines kaninguide</string>
+              <string name="app_name">Kaninguide</string>
           </resources>
           EOF
 
-          cat <<EOF > app/src/main/java/com/trine/kanin/MainActivity.java
+          cat <<'EOF' > app/src/main/java/com/trine/kanin/MainActivity.java
           package com.trine.kanin;
 
           import android.app.Activity;
@@ -118,16 +118,19 @@ jobs:
           import android.text.Editable;
           import android.text.TextWatcher;
           import android.util.TypedValue;
-          import android.view.Gravity;
           import android.view.View;
           import android.view.ViewGroup;
+          import android.widget.ArrayAdapter;
           import android.widget.Button;
           import android.widget.EditText;
+          import android.widget.HorizontalScrollView;
           import android.widget.LinearLayout;
           import android.widget.ScrollView;
+          import android.widget.Spinner;
           import android.widget.TextView;
 
           import java.util.ArrayList;
+          import java.util.Arrays;
           import java.util.List;
           import java.util.Locale;
 
@@ -137,6 +140,9 @@ jobs:
               private final List<RabbitBreed> breeds = new ArrayList<>();
               private String currentQuery = "";
               private String currentSizeFilter = "Alle";
+              private boolean favoritesOnly = false;
+              private String fitResult = "";
+              private String colorResult = "";
               private SharedPreferences prefs;
 
               private final int BG = Color.parseColor("#FFF9F5");
@@ -149,6 +155,7 @@ jobs:
               private final int SAND = Color.parseColor("#F3ECE3");
               private final int LAV = Color.parseColor("#EEE7F8");
               private final int ACCENT = Color.parseColor("#B96E7B");
+              private final int GOLD = Color.parseColor("#FFF0B8");
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -167,17 +174,17 @@ jobs:
                   LinearLayout hero = new LinearLayout(this);
                   hero.setOrientation(LinearLayout.VERTICAL);
                   hero.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  hero.setBackground(makeRounded(CARD, 28));
+                  hero.setBackground(makeRounded(CARD, 28, "#E9DED3", 2));
 
                   TextView title = new TextView(this);
-                  title.setText("Trines kaninguide 🐰");
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+                  title.setText("Kaninguide");
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Koselig oversikt over raser, farger, temperament, reproduksjon og stell.");
+                  subtitle.setText("Søk, filtrer og sammenlign raser, farger, stell, favoritter og avl.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -190,29 +197,39 @@ jobs:
                   search.setSingleLine(true);
                   search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   search.setPadding(dp(16), dp(14), dp(16), dp(14));
-                  search.setBackground(makeRounded(Color.WHITE, 22));
+                  search.setBackground(makeRounded(Color.WHITE, 22, "#E9DED3", 2));
                   root.addView(search, matchWrap(dp(12)));
 
+                  HorizontalScrollView hsv = new HorizontalScrollView(this);
+                  hsv.setHorizontalScrollBarEnabled(false);
                   LinearLayout filterRow = new LinearLayout(this);
                   filterRow.setOrientation(LinearLayout.HORIZONTAL);
-                  root.addView(filterRow, matchWrap(dp(12)));
+                  hsv.addView(filterRow);
+                  root.addView(hsv, matchWrap(dp(12)));
 
-                  String[] filters = new String[]{"Alle", "Liten", "Mellomstor", "Stor"};
+                  String[] filters = new String[]{"Alle", "Liten", "Mellomstor", "Stor", "Favoritter"};
                   for (String filter : filters) {
                       Button btn = new Button(this);
                       btn.setText(filter);
                       btn.setAllCaps(false);
-                      styleFilterButton(btn, filter.equals(currentSizeFilter));
+                      styleFilterButton(btn, false);
                       LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                              0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                              ViewGroup.LayoutParams.WRAP_CONTENT,
+                              ViewGroup.LayoutParams.WRAP_CONTENT
                       );
-                      lp.rightMargin = dp(6);
+                      lp.rightMargin = dp(8);
                       btn.setLayoutParams(lp);
+
                       btn.setOnClickListener(v -> {
-                          currentSizeFilter = filter;
+                          if (filter.equals("Favoritter")) {
+                              favoritesOnly = !favoritesOnly;
+                          } else {
+                              currentSizeFilter = filter;
+                          }
                           updateFilterButtons(filterRow);
                           render();
                       });
+
                       filterRow.addView(btn);
                   }
 
@@ -223,6 +240,7 @@ jobs:
                   scrollView.addView(root);
                   setContentView(scrollView);
 
+                  updateFilterButtons(filterRow);
                   render();
 
                   search.addTextChangedListener(new TextWatcher() {
@@ -239,7 +257,7 @@ jobs:
               private void render() {
                   contentLayout.removeAllViews();
 
-                  addInfoBox(
+                  addInfoCard(
                           "Farger og avl – enkelt forklart",
                           new String[]{
                                   "Blå + blå gir ofte blå unger.",
@@ -250,6 +268,9 @@ jobs:
                           PEACH
                   );
 
+                  addFitGuideCard();
+                  addColorCalculatorCard();
+
                   List<RabbitBreed> favorites = new ArrayList<>();
                   List<RabbitBreed> normal = new ArrayList<>();
 
@@ -258,8 +279,9 @@ jobs:
                   for (RabbitBreed breed : breeds) {
                       boolean sizeOk = currentSizeFilter.equals("Alle") || breed.size.equalsIgnoreCase(currentSizeFilter);
                       boolean queryOk = q.isEmpty() || breed.searchText().contains(q);
+                      boolean favOk = !favoritesOnly || isFavorite(breed.name);
 
-                      if (sizeOk && queryOk) {
+                      if (sizeOk && queryOk && favOk) {
                           if (isFavorite(breed.name)) favorites.add(breed);
                           else normal.add(breed);
                       }
@@ -272,18 +294,16 @@ jobs:
                       }
                   }
 
-                  if (!normal.isEmpty()) {
-                      addMiniHeadline("Raser");
-                      for (RabbitBreed breed : normal) {
-                          contentLayout.addView(createBreedCard(breed, false));
-                      }
+                  addMiniHeadline("Raser");
+                  for (RabbitBreed breed : normal) {
+                      contentLayout.addView(createBreedCard(breed, false));
                   }
 
                   if (favorites.isEmpty() && normal.isEmpty()) {
                       LinearLayout empty = new LinearLayout(this);
                       empty.setOrientation(LinearLayout.VERTICAL);
                       empty.setPadding(dp(18), dp(18), dp(18), dp(18));
-                      empty.setBackground(makeRounded(CARD, 24));
+                      empty.setBackground(makeRounded(CARD, 24, "#E9DED3", 2));
 
                       TextView tv = new TextView(this);
                       tv.setText("Ingen treff på søket ditt.");
@@ -293,7 +313,7 @@ jobs:
                       empty.addView(tv);
 
                       TextView hint = new TextView(this);
-                      hint.setText("Prøv ord som rolig, hvit, stor, pels eller familiekanin.");
+                      hint.setText("Prøv ord som rolig, hvit, stor, pels, familiekanin eller vedder.");
                       hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                       hint.setTextColor(TEXT);
                       hint.setPadding(0, dp(8), 0, 0);
@@ -301,6 +321,140 @@ jobs:
 
                       contentLayout.addView(empty, matchWrap(dp(12)));
                   }
+              }
+
+              private void addFitGuideCard() {
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setPadding(dp(16), dp(16), dp(16), dp(16));
+                  card.setBackground(makeRounded("#FFF6FB", 24, "#F0D8E7", 2));
+
+                  TextView title = new TextView(this);
+                  title.setText("Hvilken rase passer meg?");
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  card.addView(title);
+
+                  TextView desc = new TextView(this);
+                  desc.setText("Velg det som passer best, og få et enkelt forslag.");
+                  desc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                  desc.setTextColor(TEXT);
+                  desc.setPadding(0, dp(6), 0, dp(10));
+                  card.addView(desc);
+
+                  Spinner sizeSpinner = new Spinner(this);
+                  List<String> sizes = Arrays.asList("Liten", "Mellomstor", "Stor");
+                  sizeSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, sizes));
+                  card.addView(sizeSpinner);
+
+                  Spinner temperSpinner = new Spinner(this);
+                  List<String> tempers = Arrays.asList("Rolig", "Aktiv", "Familievennlig", "Mye stell");
+                  temperSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, tempers));
+                  LinearLayout.LayoutParams temperLp = matchWrap(0);
+                  temperLp.topMargin = dp(10);
+                  card.addView(temperSpinner, temperLp);
+
+                  Button btn = new Button(this);
+                  btn.setText("Finn rase");
+                  btn.setAllCaps(false);
+                  btn.setBackground(makeRounded(ACCENT, 18, ACCENT, 0));
+                  btn.setTextColor(Color.WHITE);
+                  LinearLayout.LayoutParams btnLp = matchWrap(0);
+                  btnLp.topMargin = dp(12);
+                  card.addView(btn, btnLp);
+
+                  TextView result = new TextView(this);
+                  result.setText(fitResult.isEmpty() ? "Ingen anbefaling valgt ennå." : fitResult);
+                  result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  result.setTextColor(TEXT);
+                  result.setPadding(0, dp(12), 0, 0);
+                  card.addView(result);
+
+                  btn.setOnClickListener(v -> {
+                      String s = sizeSpinner.getSelectedItem().toString();
+                      String t = temperSpinner.getSelectedItem().toString();
+                      fitResult = getFitResult(s, t);
+                      render();
+                  });
+
+                  contentLayout.addView(card, matchWrap(dp(14)));
+              }
+
+              private void addColorCalculatorCard() {
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setPadding(dp(16), dp(16), dp(16), dp(16));
+                  card.setBackground(makeRounded("#F7F3FF", 24, "#E2D9F2", 2));
+
+                  TextView title = new TextView(this);
+                  title.setText("Enkel fargekalkulator");
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  card.addView(title);
+
+                  TextView desc = new TextView(this);
+                  desc.setText("Velg farge på mor og far for å få et veiledende resultat.");
+                  desc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                  desc.setTextColor(TEXT);
+                  desc.setPadding(0, dp(6), 0, dp(10));
+                  card.addView(desc);
+
+                  List<String> colors = Arrays.asList("Blå", "Hvit rødøyd", "Viltgrå", "Svart", "Japaner");
+                  Spinner mother = new Spinner(this);
+                  mother.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, colors));
+                  card.addView(mother);
+
+                  Spinner father = new Spinner(this);
+                  father.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, colors));
+                  LinearLayout.LayoutParams fatherLp = matchWrap(0);
+                  fatherLp.topMargin = dp(10);
+                  card.addView(father, fatherLp);
+
+                  Button btn = new Button(this);
+                  btn.setText("Beregn");
+                  btn.setAllCaps(false);
+                  btn.setBackground(makeRounded(Color.parseColor("#7C6ACF"), 18, "#7C6ACF", 0));
+                  btn.setTextColor(Color.WHITE);
+                  LinearLayout.LayoutParams btnLp = matchWrap(0);
+                  btnLp.topMargin = dp(12);
+                  card.addView(btn, btnLp);
+
+                  TextView result = new TextView(this);
+                  result.setText(colorResult.isEmpty() ? "Ingen beregning ennå." : colorResult);
+                  result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  result.setTextColor(TEXT);
+                  result.setPadding(0, dp(12), 0, 0);
+                  card.addView(result);
+
+                  btn.setOnClickListener(v -> {
+                      String m = mother.getSelectedItem().toString();
+                      String f = father.getSelectedItem().toString();
+                      colorResult = getColorResult(m, f);
+                      render();
+                  });
+
+                  contentLayout.addView(card, matchWrap(dp(14)));
+              }
+
+              private String getFitResult(String size, String temperament) {
+                  if (size.equals("Liten") && temperament.equals("Familievennlig")) return "Forslag: Dvergvedder – liten og ofte fin som familiekanin.";
+                  if (size.equals("Liten") && temperament.equals("Mye stell")) return "Forslag: Løvehode – liten og flott, men krever mer pelsstell.";
+                  if (size.equals("Mellomstor") && temperament.equals("Rolig")) return "Forslag: Rex – rolig, vennlig og fin størrelse.";
+                  if (size.equals("Mellomstor") && temperament.equals("Aktiv")) return "Forslag: Belgisk hare – aktiv og elegant.";
+                  if (size.equals("Stor") && temperament.equals("Rolig")) return "Forslag: Fransk vedder – stor, tung og ofte rolig.";
+                  if (size.equals("Stor") && temperament.equals("Familievennlig")) return "Forslag: New Zealand – robust og grei i større kaninhold.";
+                  return "Forslag: Se både Dvergvedder, Rex og New Zealand – de er gode allround-valg.";
+              }
+
+              private String getColorResult(String mother, String father) {
+                  if (mother.equals("Blå") && father.equals("Blå")) return "Mulig utfall: ofte blå unger. Dette er en av de mer forutsigbare kombinasjonene.";
+                  if (mother.equals("Hvit rødøyd") || father.equals("Hvit rødøyd")) return "Mulig utfall: hvit rødøyd kan skjule andre farger, så avkom kan bli mer variert enn det ser ut som.";
+                  if (mother.equals("Viltgrå") && father.equals("Viltgrå")) return "Mulig utfall: ofte viltgrå, men også andre variasjoner kan dukke opp.";
+                  if (mother.equals("Svart") && father.equals("Svart")) return "Mulig utfall: ofte svart, men skjulte gener kan gi variasjon.";
+                  if (mother.equals("Japaner") || father.equals("Japaner")) return "Mulig utfall: japaner kan gi spennende og varierte tegninger, men dette er vanskelig å forutsi nøyaktig.";
+                  return "Mulig utfall: flere varianter. Resultatet er veiledende og avhenger av skjulte gener.";
               }
 
               private void addMiniHeadline(String text) {
@@ -313,10 +467,10 @@ jobs:
                   contentLayout.addView(tv);
               }
 
-              private void addInfoBox(String heading, String[] lines, int bgColor) {
+              private void addInfoCard(String heading, String[] lines, int bgColor) {
                   LinearLayout box = new LinearLayout(this);
                   box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 24));
+                  box.setBackground(makeRounded(bgColor, 24, "#E9DED3", 0));
                   box.setPadding(dp(16), dp(16), dp(16), dp(16));
 
                   TextView title = new TextView(this);
@@ -342,7 +496,7 @@ jobs:
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  card.setBackground(makeRounded(CARD, 26));
+                  card.setBackground(makeRounded(CARD, 26, "#E9DED3", 2));
 
                   LinearLayout top = new LinearLayout(this);
                   top.setOrientation(LinearLayout.HORIZONTAL);
@@ -368,7 +522,6 @@ jobs:
 
                   LinearLayout badges = new LinearLayout(this);
                   badges.setOrientation(LinearLayout.HORIZONTAL);
-                  badges.setGravity(Gravity.START);
                   badges.addView(makeBadge(breed.size, LAV));
                   badges.addView(makeBadge(breed.tag, favorite ? PINK : SAGE));
                   left.addView(badges);
@@ -379,7 +532,7 @@ jobs:
                   fav.setAllCaps(false);
                   fav.setText(favorite ? "★" : "☆");
                   fav.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-                  fav.setBackground(makeRounded(Color.parseColor("#FFF0B8"), 18));
+                  fav.setBackground(makeRounded(GOLD, 18, "#E0C56E", 2));
                   fav.setTextColor(Color.parseColor("#8A5B00"));
                   fav.setOnClickListener(v -> {
                       toggleFavorite(breed.name);
@@ -394,7 +547,7 @@ jobs:
                   addLabelValue(card, "Reproduksjon", breed.reproduction);
 
                   addBox(card, "Fordeler", breed.pros, SAGE);
-                  addBox(card, "Ulemper", breed.cons, Color.parseColor("#FBE8EA"));
+                  addBox(card, "Ulemper", breed.cons, PINK);
                   addBox(card, "Hva rasen krever", breed.needs, SAND);
 
                   return card;
@@ -406,14 +559,13 @@ jobs:
                   tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                   tv.setTextColor(TITLE);
                   tv.setPadding(dp(10), dp(6), dp(10), dp(6));
-                  tv.setBackground(makeRounded(bg, 18));
+                  tv.setBackground(makeRounded(bg, 18, "#00000000", 0));
 
                   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                           ViewGroup.LayoutParams.WRAP_CONTENT,
                           ViewGroup.LayoutParams.WRAP_CONTENT
                   );
                   lp.rightMargin = dp(8);
-                  lp.topMargin = dp(2);
                   tv.setLayoutParams(lp);
                   return tv;
               }
@@ -437,7 +589,7 @@ jobs:
               private void addBox(LinearLayout parent, String titleText, String body, int bgColor) {
                   LinearLayout box = new LinearLayout(this);
                   box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 20));
+                  box.setBackground(makeRounded(bgColor, 20, "#00000000", 0));
                   box.setPadding(dp(14), dp(14), dp(14), dp(14));
 
                   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -464,10 +616,11 @@ jobs:
                   parent.addView(box);
               }
 
-              private GradientDrawable makeRounded(int color, int radiusDp) {
+              private GradientDrawable makeRounded(int color, int radiusDp, String strokeColor, int strokeDp) {
                   GradientDrawable d = new GradientDrawable();
                   d.setColor(color);
                   d.setCornerRadius(dp(radiusDp));
+                  if (strokeDp > 0) d.setStroke(dp(strokeDp), Color.parseColor(strokeColor));
                   return d;
               }
 
@@ -483,12 +636,12 @@ jobs:
               private void styleFilterButton(Button btn, boolean active) {
                   btn.setAllCaps(false);
                   btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                  btn.setPadding(dp(8), dp(10), dp(8), dp(10));
+                  btn.setPadding(dp(14), dp(10), dp(14), dp(10));
                   if (active) {
-                      btn.setBackground(makeRounded(ACCENT, 18));
+                      btn.setBackground(makeRounded(ACCENT, 18, "#00000000", 0));
                       btn.setTextColor(Color.WHITE);
                   } else {
-                      btn.setBackground(makeRounded(Color.WHITE, 18));
+                      btn.setBackground(makeRounded(Color.WHITE, 18, "#E9DED3", 2));
                       btn.setTextColor(TITLE);
                   }
               }
@@ -498,7 +651,9 @@ jobs:
                       View child = row.getChildAt(i);
                       if (child instanceof Button) {
                           Button btn = (Button) child;
-                          styleFilterButton(btn, btn.getText().toString().equals(currentSizeFilter));
+                          String t = btn.getText().toString();
+                          boolean active = t.equals(currentSizeFilter) || (t.equals("Favoritter") && favoritesOnly);
+                          styleFilterButton(btn, active);
                       }
                   }
               }
@@ -518,99 +673,89 @@ jobs:
               }
 
               private void seedData() {
-                  breeds.add(new RabbitBreed(
-                          "Hermelin", "Liten", "ca. 0,8–1,3 kg", "Livlig",
+                  breeds.add(new RabbitBreed("Hermelin", "Liten", "ca. 0,8–1,3 kg", "Livlig",
                           "Våken, livlig og ofte kvikk.",
                           "Hvit rødøyd, hvit blåøyd og flere fargevarianter.",
                           "Kjønnsmoden tidlig. Små kull er vanlig sammenlignet med større raser.",
                           "• Tar lite plass\n• Lett å håndtere fysisk\n• Populær som kjæledyr",
                           "• Kan være nervøs\n• Passer ikke alltid for små barn\n• Små kull",
-                          "• Rolig miljø\n• God sosialisering\n• Romslig binge\n• Mye høy og aktivitet"
-                  ));
+                          "• Rolig miljø\n• God sosialisering\n• Romslig binge\n• Mye høy og aktivitet"));
 
-                  breeds.add(new RabbitBreed(
-                          "Dvergvedder", "Liten", "ca. 1,4–1,9 kg", "Familievennlig",
+                  breeds.add(new RabbitBreed("Dvergvedder", "Liten", "ca. 1,4–1,9 kg", "Familievennlig",
                           "Ofte roligere og mer sosial enn mange andre små raser.",
                           "Viltgrå, svart, blå, hvit, madagaskar og flere.",
                           "Tidlig kjønnsmodning. Vanligvis moderate kull.",
                           "• Populær familiekanin\n• Ofte tillitsfull\n• Fin størrelse inne og ute",
                           "• Ørene må følges opp\n• Kan bli overvektig\n• Pelsen krever tilsyn i røyting",
-                          "• Øresjekk\n• Vektkontroll\n• God plass til hopping\n• Gjerne selskap"
-                  ));
+                          "• Øresjekk\n• Vektkontroll\n• God plass til hopping\n• Gjerne selskap"));
 
-                  breeds.add(new RabbitBreed(
-                          "Løvehode", "Liten", "ca. 1,2–1,7 kg", "Mye stell",
+                  breeds.add(new RabbitBreed("Løvehode", "Liten", "ca. 1,2–1,7 kg", "Mye stell",
                           "Søt, kvikk og nysgjerrig.",
                           "Hvit, svart, blå, viltfarget, japaner og flere.",
                           "Som liten rase blir den tidlig kjønnsmoden. Kullstørrelse ofte mindre enn hos store raser.",
                           "• Dekorativ\n• Populær selskapskanin\n• Mange fine farger",
                           "• Mer pelsstell\n• Kan få tover\n• Noen linjer kan ha tannproblemer",
-                          "• Jevnlig pelsstell\n• Kontroll rundt øyne og bakpart\n• Fiberrik mat"
-                  ));
+                          "• Jevnlig pelsstell\n• Kontroll rundt øyne og bakpart\n• Fiberrik mat"));
 
-                  breeds.add(new RabbitBreed(
-                          "Rex", "Mellomstor", "ca. 3–4,5 kg", "Rolig",
+                  breeds.add(new RabbitBreed("Rex", "Mellomstor", "ca. 3–4,5 kg", "Rolig",
                           "Rolig, vennlig og ofte lett å få tam.",
                           "Castor, svart, blå, hvit, havanna og otter.",
                           "Moderate kull. Ofte mer robust oppfostring enn hos de minste rasene.",
                           "• Fløyelsmyk pels\n• Rolig gemytt\n• Fin størrelse",
                           "• Pelsen tåler mindre røff håndtering\n• Kan få trykksår på dårlig underlag\n• Mindre værhard pels",
-                          "• Tørt underlag\n• Rolig håndtering\n• God isolasjon vinterstid"
-                  ));
+                          "• Tørt underlag\n• Rolig håndtering\n• God isolasjon vinterstid"));
 
-                  breeds.add(new RabbitBreed(
-                          "New Zealand", "Stor", "ca. 4–5,5 kg", "Robust",
+                  breeds.add(new RabbitBreed("New Zealand", "Stor", "ca. 4–5,5 kg", "Robust",
                           "Rolig, robust og matglad.",
                           "Hvit, rød og svart.",
                           "Kjent for god reproduksjon og jevne kull. Større kull enn hos små raser er vanlig.",
                           "• Robust rase\n• God morsegenskap\n• Fin for større kaninhold",
                           "• Krever mer plass\n• Spiser mer\n• Tyngre for barn å håndtere",
-                          "• Større binge\n• Godt underlag\n• Mer høy og fôr"
-                  ));
+                          "• Større binge\n• Godt underlag\n• Mer høy og fôr"));
 
-                  breeds.add(new RabbitBreed(
-                          "Fransk vedder", "Stor", "ca. 5–7 kg", "Stor og rolig",
+                  breeds.add(new RabbitBreed("Fransk vedder", "Stor", "ca. 5–7 kg", "Stor og rolig",
                           "Mild, tung og ofte rolig.",
                           "Viltgrå, jerngrå, blå, svart, gul og flere.",
                           "Store hunner kan få gode kull, men rasen krever mer plass og oppfølging.",
                           "• Rolig uttrykk\n• Imponerende størrelse\n• Trivelig selskapskanin",
                           "• Trenger mye plass\n• Ørene må følges opp\n• Kan belaste ledd ved overvekt",
-                          "• Romslig opphold\n• Tørt miljø\n• Vektkontroll\n• Stor utegård"
-                  ));
+                          "• Romslig opphold\n• Tørt miljø\n• Vektkontroll\n• Stor utegård"));
 
-                  breeds.add(new RabbitBreed(
-                          "Belgisk hare", "Mellomstor", "ca. 3–4 kg", "Aktiv",
+                  breeds.add(new RabbitBreed("Belgisk hare", "Mellomstor", "ca. 3–4 kg", "Aktiv",
                           "Svært aktiv, følsom og elegant.",
                           "Rødbrun harefarget.",
                           "Kan avles fint, men rasen er ofte mer krevende i temperament og miljø.",
                           "• Vakker og atletisk\n• Høy aktivitet\n• Spennende rase for erfarne",
                           "• Kan være stresset\n• Mindre egnet for små barn\n• Krever mye plass og ro",
-                          "• Lang løpeflate\n• Lite stress\n• Skjulesteder\n• Tålmodig håndtering"
-                  ));
+                          "• Lang løpeflate\n• Lite stress\n• Skjulesteder\n• Tålmodig håndtering"));
 
-                  breeds.add(new RabbitBreed(
-                          "Flandernkjempe", "Stor", "ca. 6–10+ kg", "Kjempe",
+                  breeds.add(new RabbitBreed("Flandernkjempe", "Stor", "ca. 6–10+ kg", "Kjempe",
                           "Rolig kjempe, ofte mild og tregere i tempo.",
                           "Stålfarget, sand, svart, blå og lys grå.",
                           "Større kropp gir rom for større kull, men alt krever mer plass og kraftigere utstyr.",
                           "• Imponerende størrelse\n• Ofte rolig gemytt\n• Kan bli svært tam",
                           "• Krever mye plass\n• Spiser mye\n• Belaster poter og ledd mer",
-                          "• Svært romslig opphold\n• Godt underlag\n• Vektkontroll\n• Robuste matskåler og hus"
-                  ));
+                          "• Svært romslig opphold\n• Godt underlag\n• Vektkontroll\n• Robuste matskåler og hus"));
+
+                  breeds.add(new RabbitBreed("Sachsengold", "Mellomstor", "ca. 3–4 kg", "Farge",
+                          "Rolig og ofte vennlig.",
+                          "Gyllen-oransje tone.",
+                          "Kan gi fine varme farger i avl, men genetikk varierer.",
+                          "• Pen farge\n• Fin størrelse\n• Rolig type",
+                          "• Mindre vanlig\n• Krever god oversikt i avl",
+                          "• Vanlig kaninstell\n• God plass\n• Jevnlig tilsyn"));
+
+                  breeds.add(new RabbitBreed("Nederlandsk dverg", "Liten", "ca. 0,8–1,2 kg", "Liten",
+                          "Liten, rask og ofte livlig.",
+                          "Mange farger og tegninger.",
+                          "Små kull er vanlig. Tidlig kjønnsmodning.",
+                          "• Tar lite plass\n• Søt og populær",
+                          "• Kan være kvikk og følsom\n• Ikke alltid best for små barn",
+                          "• Rolig håndtering\n• Sikker binge\n• Daglig aktivitet"));
               }
 
               static class RabbitBreed {
-                  String name;
-                  String size;
-                  String weight;
-                  String tag;
-                  String temperament;
-                  String colors;
-                  String reproduction;
-                  String pros;
-                  String cons;
-                  String needs;
-
+                  String name, size, weight, tag, temperament, colors, reproduction, pros, cons, needs;
                   RabbitBreed(String name, String size, String weight, String tag, String temperament,
                               String colors, String reproduction, String pros, String cons, String needs) {
                       this.name = name;
@@ -624,7 +769,6 @@ jobs:
                       this.cons = cons;
                       this.needs = needs;
                   }
-
                   String searchText() {
                       return (name + " " + size + " " + weight + " " + tag + " " + temperament + " " +
                               colors + " " + reproduction + " " + pros + " " + cons + " " + needs)
