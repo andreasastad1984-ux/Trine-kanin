@@ -68,8 +68,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 14
-              versionName "14.0"
+              versionCode 15
+              versionName "15.0"
             }
 
             buildTypes {
@@ -244,7 +244,7 @@ jobs:
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Kort oversikt på forsiden. Full info på egen detaljside.");
+                  subtitle.setText("Pro-versjon med lagrede favoritter og renere oversikt.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -253,7 +253,7 @@ jobs:
                   root.addView(hero, matchWrap(dp(12)));
 
                   searchInput = new EditText(this);
-                  searchInput.setHint("🔎 Søk etter rase, farge, temperament...");
+                  searchInput.setHint("Søk etter rase, farge, temperament...");
                   searchInput.setSingleLine(true);
                   searchInput.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   searchInput.setPadding(dp(16), dp(14), dp(16), dp(14));
@@ -275,7 +275,7 @@ jobs:
                   hsv.setHorizontalScrollBarEnabled(false);
                   LinearLayout filterRow = new LinearLayout(this);
                   filterRow.setOrientation(LinearLayout.HORIZONTAL);
-                  filterRow.setPadding(0, 0, dp(28), 0);
+                  filterRow.setPadding(0, 0, dp(36), 0);
                   hsv.addView(filterRow);
                   root.addView(hsv, matchWrap(dp(12)));
 
@@ -342,7 +342,7 @@ jobs:
 
                   LinearLayout row = new LinearLayout(this);
                   row.setOrientation(LinearLayout.HORIZONTAL);
-                  row.setPadding(0, 0, dp(28), 0);
+                  row.setPadding(0, 0, dp(36), 0);
                   hsv.addView(row);
 
                   String[] chips = new String[]{"Familievennlig", "Rolig", "Mye stell", "Stor", "Liten"};
@@ -753,14 +753,14 @@ jobs:
                   imageHolder.setOrientation(LinearLayout.VERTICAL);
                   imageHolder.setGravity(Gravity.CENTER);
                   imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
-                  imageHolder.setPadding(dp(12), dp(26), dp(12), dp(26));
+                  imageHolder.setPadding(dp(12), dp(20), dp(12), dp(20));
                   LinearLayout.LayoutParams imgLp = matchWrap(0);
                   imgLp.topMargin = dp(14);
                   imageHolder.setLayoutParams(imgLp);
 
                   TextView bunny = new TextView(this);
                   bunny.setText("🐇");
-                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 40);
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
                   bunny.setGravity(Gravity.CENTER);
                   imageHolder.addView(bunny);
 
@@ -801,7 +801,7 @@ jobs:
                   startActivity(intent);
               }
 
-              private View makeBadge(String text, int bg) {
+              private TextView makeBadge(String text, int bg) {
                   TextView tv = new TextView(this);
                   tv.setText(text);
                   tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
@@ -1004,9 +1004,7 @@ jobs:
                   }
 
                   String shortSummary() {
-                      return temperament + " Passer for deg som vil ha en " +
-                              size.toLowerCase(Locale.ROOT) + " rase med " +
-                              tag.toLowerCase(Locale.ROOT) + ".";
+                      return temperament;
                   }
               }
           }
@@ -1016,6 +1014,7 @@ jobs:
           package com.trine.kanin;
 
           import android.app.Activity;
+          import android.content.SharedPreferences;
           import android.graphics.Color;
           import android.graphics.Typeface;
           import android.graphics.drawable.GradientDrawable;
@@ -1023,11 +1022,14 @@ jobs:
           import android.util.TypedValue;
           import android.view.Gravity;
           import android.view.ViewGroup;
+          import android.widget.Button;
           import android.widget.LinearLayout;
           import android.widget.ScrollView;
           import android.widget.TextView;
 
           public class DetailActivity extends Activity {
+
+              private SharedPreferences prefs;
 
               private final int BG = Color.parseColor("#FFF9F5");
               private final int CARD = Color.parseColor("#FFFFFF");
@@ -1040,10 +1042,14 @@ jobs:
               private final int LAV = Color.parseColor("#EEE7F8");
               private final int BORDER = Color.parseColor("#E9DED3");
               private final int IMAGE_BG = Color.parseColor("#FFF6FB");
+              private final int GOLD = Color.parseColor("#FFF0B8");
+              private final int GOLD_BORDER = Color.parseColor("#E0C56E");
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
+                  prefs = getSharedPreferences("kaninguide", MODE_PRIVATE);
 
                   String name = getIntent().getStringExtra("name");
                   String size = getIntent().getStringExtra("size");
@@ -1068,25 +1074,50 @@ jobs:
                   card.setPadding(dp(18), dp(18), dp(18), dp(18));
                   card.setBackground(makeRounded(CARD, 28, BORDER, 2));
 
+                  LinearLayout topBar = new LinearLayout(this);
+                  topBar.setOrientation(LinearLayout.HORIZONTAL);
+
+                  LinearLayout left = new LinearLayout(this);
+                  left.setOrientation(LinearLayout.VERTICAL);
+                  left.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
                   TextView title = new TextView(this);
                   title.setText(name);
                   title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
-                  card.addView(title);
+                  left.addView(title);
 
                   TextView meta = new TextView(this);
                   meta.setText(size + " • " + weight);
                   meta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   meta.setTextColor(TEXT);
                   meta.setPadding(0, dp(6), 0, dp(10));
-                  card.addView(meta);
+                  left.addView(meta);
 
                   LinearLayout badges = new LinearLayout(this);
                   badges.setOrientation(LinearLayout.HORIZONTAL);
                   badges.addView(makeBadge(size, LAV));
                   badges.addView(makeBadge(tag, SAGE));
-                  card.addView(badges);
+                  left.addView(badges);
+
+                  topBar.addView(left);
+
+                  Button favBtn = new Button(this);
+                  boolean favorite = isFavorite(name);
+                  favBtn.setText(favorite ? "★ Lagret" : "☆ Favoritt");
+                  favBtn.setAllCaps(false);
+                  favBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                  favBtn.setBackground(makeRounded(GOLD, 18, GOLD_BORDER, 2));
+                  favBtn.setTextColor(Color.parseColor("#8A5B00"));
+                  favBtn.setOnClickListener(v -> {
+                      toggleFavorite(name);
+                      boolean newFav = isFavorite(name);
+                      favBtn.setText(newFav ? "★ Lagret" : "☆ Favoritt");
+                  });
+                  topBar.addView(favBtn);
+
+                  card.addView(topBar);
 
                   LinearLayout imageHolder = new LinearLayout(this);
                   imageHolder.setOrientation(LinearLayout.VERTICAL);
@@ -1120,9 +1151,29 @@ jobs:
                   addBox(card, "Ulemper", cons, PINK);
                   addBox(card, "Hva rasen krever", needs, SAND);
 
+                  Button backBtn = new Button(this);
+                  backBtn.setText("← Tilbake");
+                  backBtn.setAllCaps(false);
+                  backBtn.setTextColor(TITLE);
+                  backBtn.setBackground(makeRounded(Color.parseColor("#F7F1EB"), 18, BORDER, 2));
+                  LinearLayout.LayoutParams backLp = matchWrap(0);
+                  backLp.topMargin = dp(14);
+                  backBtn.setLayoutParams(backLp);
+                  backBtn.setOnClickListener(v -> finish());
+                  card.addView(backBtn);
+
                   root.addView(card);
                   scrollView.addView(root);
                   setContentView(scrollView);
+              }
+
+              private boolean isFavorite(String name) {
+                  return prefs.getBoolean("fav_" + name, false);
+              }
+
+              private void toggleFavorite(String name) {
+                  boolean current = isFavorite(name);
+                  prefs.edit().putBoolean("fav_" + name, !current).apply();
               }
 
               private TextView makeBadge(String text, int bg) {
