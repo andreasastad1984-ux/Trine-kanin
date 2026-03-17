@@ -1125,7 +1125,7 @@ jobs:
                   setContentView(scrollView);
               }
 
-              private ViewGroup makeBadge(String text, int bg) {
+              private textview makeBadge(String text, int bg) {
                   TextView tv = new TextView(this);
                   tv.setText(text);
                   tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
