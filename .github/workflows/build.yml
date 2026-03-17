@@ -66,8 +66,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 6
-              versionName "6.0"
+              versionCode 7
+              versionName "7.0"
             }
 
             buildTypes {
@@ -156,6 +156,9 @@ jobs:
               private final int LAV = Color.parseColor("#EEE7F8");
               private final int ACCENT = Color.parseColor("#B96E7B");
               private final int GOLD = Color.parseColor("#FFF0B8");
+              private final int BORDER = Color.parseColor("#E9DED3");
+
+              private EditText searchInput;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -174,7 +177,7 @@ jobs:
                   LinearLayout hero = new LinearLayout(this);
                   hero.setOrientation(LinearLayout.VERTICAL);
                   hero.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  hero.setBackground(makeRounded(CARD, 28, "#E9DED3", 2));
+                  hero.setBackground(makeRounded(CARD, 28, BORDER, 2));
 
                   TextView title = new TextView(this);
                   title.setText("Kaninguide");
@@ -184,7 +187,7 @@ jobs:
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Søk, filtrer og sammenlign raser, farger, stell, favoritter og avl.");
+                  subtitle.setText("Søk, filtrer og sammenlign kaninraser, farger, temperament, reproduksjon og stell.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -192,13 +195,15 @@ jobs:
 
                   root.addView(hero, matchWrap(dp(12)));
 
-                  EditText search = new EditText(this);
-                  search.setHint("Søk etter rase, farge, temperament...");
-                  search.setSingleLine(true);
-                  search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                  search.setPadding(dp(16), dp(14), dp(16), dp(14));
-                  search.setBackground(makeRounded(Color.WHITE, 22, "#E9DED3", 2));
-                  root.addView(search, matchWrap(dp(12)));
+                  searchInput = new EditText(this);
+                  searchInput.setHint("Søk etter rase, farge, temperament...");
+                  searchInput.setSingleLine(true);
+                  searchInput.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  searchInput.setPadding(dp(16), dp(14), dp(16), dp(14));
+                  searchInput.setTextColor(TITLE);
+                  searchInput.setHintTextColor(Color.parseColor("#9C918A"));
+                  searchInput.setBackground(makeRounded(Color.WHITE, 22, BORDER, 2));
+                  root.addView(searchInput, matchWrap(dp(12)));
 
                   HorizontalScrollView hsv = new HorizontalScrollView(this);
                   hsv.setHorizontalScrollBarEnabled(false);
@@ -243,7 +248,7 @@ jobs:
                   updateFilterButtons(filterRow);
                   render();
 
-                  search.addTextChangedListener(new TextWatcher() {
+                  searchInput.addTextChangedListener(new TextWatcher() {
                       @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                       @Override public void afterTextChanged(Editable s) {}
                       @Override
@@ -270,6 +275,11 @@ jobs:
 
                   addFitGuideCard();
                   addColorCalculatorCard();
+
+                  List<RabbitBreed> suggestions = getSuggestions(currentQuery);
+                  if (!currentQuery.trim().isEmpty() && !suggestions.isEmpty()) {
+                      addSuggestionCard(suggestions);
+                  }
 
                   List<RabbitBreed> favorites = new ArrayList<>();
                   List<RabbitBreed> normal = new ArrayList<>();
@@ -303,7 +313,7 @@ jobs:
                       LinearLayout empty = new LinearLayout(this);
                       empty.setOrientation(LinearLayout.VERTICAL);
                       empty.setPadding(dp(18), dp(18), dp(18), dp(18));
-                      empty.setBackground(makeRounded(CARD, 24, "#E9DED3", 2));
+                      empty.setBackground(makeRounded(CARD, 24, BORDER, 2));
 
                       TextView tv = new TextView(this);
                       tv.setText("Ingen treff på søket ditt.");
@@ -321,6 +331,37 @@ jobs:
 
                       contentLayout.addView(empty, matchWrap(dp(12)));
                   }
+              }
+
+              private void addSuggestionCard(List<RabbitBreed> suggestions) {
+                  LinearLayout box = new LinearLayout(this);
+                  box.setOrientation(LinearLayout.VERTICAL);
+                  box.setPadding(dp(16), dp(16), dp(16), dp(16));
+                  box.setBackground(makeRounded("#F6F0FF", 22, "#E3D9F4", 2));
+
+                  TextView title = new TextView(this);
+                  title.setText("Forslag");
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  box.addView(title);
+
+                  int count = Math.min(4, suggestions.size());
+                  for (int i = 0; i < count; i++) {
+                      RabbitBreed breed = suggestions.get(i);
+                      TextView item = new TextView(this);
+                      item.setText("• " + breed.name + " (" + breed.size + ")");
+                      item.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                      item.setTextColor(TEXT);
+                      item.setPadding(0, dp(8), 0, 0);
+                      item.setOnClickListener(v -> {
+                          searchInput.setText(breed.name);
+                          searchInput.setSelection(breed.name.length());
+                      });
+                      box.addView(item);
+                  }
+
+                  contentLayout.addView(box, matchWrap(dp(14)));
               }
 
               private void addFitGuideCard() {
@@ -402,6 +443,7 @@ jobs:
                   card.addView(desc);
 
                   List<String> colors = Arrays.asList("Blå", "Hvit rødøyd", "Viltgrå", "Svart", "Japaner");
+
                   Spinner mother = new Spinner(this);
                   mother.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, colors));
                   card.addView(mother);
@@ -438,6 +480,19 @@ jobs:
                   contentLayout.addView(card, matchWrap(dp(14)));
               }
 
+              private List<RabbitBreed> getSuggestions(String query) {
+                  List<RabbitBreed> out = new ArrayList<>();
+                  String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+                  if (q.isEmpty()) return out;
+
+                  for (RabbitBreed breed : breeds) {
+                      if (breed.searchText().contains(q)) {
+                          out.add(breed);
+                      }
+                  }
+                  return out;
+              }
+
               private String getFitResult(String size, String temperament) {
                   if (size.equals("Liten") && temperament.equals("Familievennlig")) return "Forslag: Dvergvedder – liten og ofte fin som familiekanin.";
                   if (size.equals("Liten") && temperament.equals("Mye stell")) return "Forslag: Løvehode – liten og flott, men krever mer pelsstell.";
@@ -470,7 +525,7 @@ jobs:
               private void addInfoCard(String heading, String[] lines, int bgColor) {
                   LinearLayout box = new LinearLayout(this);
                   box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 24, "#E9DED3", 0));
+                  box.setBackground(makeRounded(bgColor, 24, BORDER, 0));
                   box.setPadding(dp(16), dp(16), dp(16), dp(16));
 
                   TextView title = new TextView(this);
@@ -496,7 +551,7 @@ jobs:
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  card.setBackground(makeRounded(CARD, 26, "#E9DED3", 2));
+                  card.setBackground(makeRounded(CARD, 26, BORDER, 2));
 
                   LinearLayout top = new LinearLayout(this);
                   top.setOrientation(LinearLayout.HORIZONTAL);
@@ -616,11 +671,11 @@ jobs:
                   parent.addView(box);
               }
 
-              private GradientDrawable makeRounded(int color, int radiusDp, String strokeColor, int strokeDp) {
+              private GradientDrawable makeRounded(int color, int radiusDp, int strokeColor, int strokeDp) {
                   GradientDrawable d = new GradientDrawable();
                   d.setColor(color);
                   d.setCornerRadius(dp(radiusDp));
-                  if (strokeDp > 0) d.setStroke(dp(strokeDp), Color.parseColor(strokeColor));
+                  if (strokeDp > 0) d.setStroke(dp(strokeDp), strokeColor);
                   return d;
               }
 
@@ -638,10 +693,10 @@ jobs:
                   btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                   btn.setPadding(dp(14), dp(10), dp(14), dp(10));
                   if (active) {
-                      btn.setBackground(makeRounded(ACCENT, 18, "#00000000", 0));
+                      btn.setBackground(makeRounded(ACCENT, 18, 0, 0));
                       btn.setTextColor(Color.WHITE);
                   } else {
-                      btn.setBackground(makeRounded(Color.WHITE, 18, "#E9DED3", 2));
+                      btn.setBackground(makeRounded(Color.WHITE, 18, BORDER, 2));
                       btn.setTextColor(TITLE);
                   }
               }
