@@ -24,6 +24,7 @@ jobs:
       - name: Create project
         run: |
           mkdir -p app/src/main/java/com/trine/kanin
+          mkdir -p app/src/main/res/values
 
           echo "android.useAndroidX=true" > gradle.properties
 
@@ -99,20 +100,304 @@ jobs:
           </manifest>
           EOF
 
+          cat <<EOF > app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">Trines kaninguide</string>
+          </resources>
+          EOF
+
           cat <<EOF > app/src/main/java/com/trine/kanin/MainActivity.java
           package com.trine.kanin;
 
           import android.app.Activity;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
           import android.os.Bundle;
+          import android.util.TypedValue;
+          import android.view.Gravity;
+          import android.view.ViewGroup;
+          import android.widget.LinearLayout;
+          import android.widget.ScrollView;
           import android.widget.TextView;
 
           public class MainActivity extends Activity {
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
+                  ScrollView scrollView = new ScrollView(this);
+                  scrollView.setBackgroundColor(Color.parseColor("#F5F5F5"));
+
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(dp(16), dp(16), dp(16), dp(24));
+                  scrollView.addView(root);
+
+                  addTitle(root, "Trines kaninguide 🐰");
+                  addSubtitle(root, "Oversikt over kaninraser, farger, reproduksjon, fordeler, ulemper og krav til stell.");
+
+                  addSection(root, "Generelt om reproduksjon og stell");
+                  addBullet(root, "Drektighet hos kanin er vanligvis rundt 30–33 dager.");
+                  addBullet(root, "Små raser blir ofte kjønnsmodne tidligere enn store raser.");
+                  addBullet(root, "Kullstørrelse varierer med rase, linje, alder, helse og hold.");
+                  addBullet(root, "Kaniner trenger god plass, mye høy, friskt vann og daglig tilsyn.");
+                  addBullet(root, "Bruk seriøse oppdrettere og veterinær som støtte ved avl.");
+
+                  addBreed(root,
+                          "Hermelin",
+                          "Liten • ca. 0,8–1,3 kg",
+                          "Våken, livlig og ofte kvikk.",
+                          "Hvit rødøyd, hvit blåøyd og flere fargevarianter.",
+                          "Kjønnsmoden tidlig. Små kull er vanlig sammenlignet med større raser.",
+                          new String[]{"Tar lite plass", "Lett å håndtere fysisk", "Populær som kjæledyr"},
+                          new String[]{"Kan være nervøs", "Passer ikke alltid for små barn", "Små kull"},
+                          new String[]{"Rolig miljø", "God sosialisering", "Romslig binge", "Mye høy og aktivitet"}
+                  );
+
+                  addBreed(root,
+                          "Dvergvedder",
+                          "Liten • ca. 1,4–1,9 kg",
+                          "Ofte roligere og mer sosial enn mange andre små raser.",
+                          "Viltgrå, svart, blå, hvit, madagaskar og flere.",
+                          "Tidlig kjønnsmodning. Vanligvis moderate kull.",
+                          new String[]{"Populær familiekanin", "Ofte tillitsfull", "Fin størrelse inne og ute"},
+                          new String[]{"Ørene må følges opp", "Kan bli overvektig", "Pelsen krever tilsyn i røyting"},
+                          new String[]{"Øresjekk", "Vektkontroll", "God plass til hopping", "Gjerne selskap"}
+                  );
+
+                  addBreed(root,
+                          "Løvehodekanin",
+                          "Liten • ca. 1,2–1,7 kg",
+                          "Søt, kvikk og nysgjerrig.",
+                          "Hvit, svart, blå, viltfarget, japaner og flere.",
+                          "Som liten rase blir den tidlig kjønnsmoden. Kullstørrelse ofte mindre enn hos store raser.",
+                          new String[]{"Dekorativ", "Populær selskapskanin", "Mange fine farger"},
+                          new String[]{"Mer pelsstell", "Kan få tover", "Noen linjer kan ha tannproblemer"},
+                          new String[]{"Jevnlig pelsstell", "Kontroll rundt øyne og bakpart", "Fiberrik mat"}
+                  );
+
+                  addBreed(root,
+                          "Rex",
+                          "Mellomstor • ca. 3–4,5 kg",
+                          "Rolig, vennlig og ofte lett å få tam.",
+                          "Castor, svart, blå, hvit, havanna og otter.",
+                          "Moderate kull. Ofte mer robust oppfostring enn hos de minste rasene.",
+                          new String[]{"Fløyelsmyk pels", "Rolig gemytt", "Fin størrelse"},
+                          new String[]{"Pelsen tåler mindre røff håndtering", "Kan få trykksår på dårlig underlag", "Mindre værhard pels"},
+                          new String[]{"Tørt underlag", "Rolig håndtering", "God isolasjon vinterstid"}
+                  );
+
+                  addBreed(root,
+                          "New Zealand",
+                          "Stor • ca. 4–5,5 kg",
+                          "Rolig, robust og matglad.",
+                          "Hvit, rød og svart.",
+                          "Kjent for god reproduksjon og jevne kull. Større kull enn hos små raser er vanlig.",
+                          new String[]{"Robust rase", "God morsegenskap", "Fin for større kaninhold"},
+                          new String[]{"Krever mer plass", "Spiser mer", "Tyngre for barn å håndtere"},
+                          new String[]{"Større binge", "Godt underlag", "Mer høy og fôr"}
+                  );
+
+                  addBreed(root,
+                          "Fransk vedder",
+                          "Stor • ca. 5–7 kg",
+                          "Mild, tung og ofte rolig.",
+                          "Viltgrå, jerngrå, blå, svart, gul og flere.",
+                          "Store hunner kan få gode kull, men rasen krever mer plass og oppfølging.",
+                          new String[]{"Rolig uttrykk", "Imponerende størrelse", "Trivelig selskapskanin"},
+                          new String[]{"Trenger mye plass", "Ørene må følges opp", "Kan belaste ledd ved overvekt"},
+                          new String[]{"Romslig opphold", "Tørt miljø", "Vektkontroll", "Stor utegård"}
+                  );
+
+                  addBreed(root,
+                          "Belgisk hare",
+                          "Mellomstor til stor • ca. 3–4 kg",
+                          "Svært aktiv, følsom og elegant.",
+                          "Rødbrun harefarget.",
+                          "Kan avles fint, men rasen er ofte mer krevende i temperament og miljø.",
+                          new String[]{"Vakker og atletisk", "Høy aktivitet", "Spennende rase for erfarne"},
+                          new String[]{"Kan være stresset", "Mindre egnet for små barn", "Krever mye plass og ro"},
+                          new String[]{"Lang løpeflate", "Lite stress", "Skjulesteder", "Tålmodig håndtering"}
+                  );
+
+                  addBreed(root,
+                          "Flandernkjempe",
+                          "Svært stor • ca. 6–10+ kg",
+                          "Rolig kjempe, ofte mild og tregere i tempo.",
+                          "Stålfarget, sand, svart, blå og lys grå.",
+                          "Større kropp gir rom for større kull, men alt krever mer plass og kraftigere utstyr.",
+                          new String[]{"Imponerende størrelse", "Ofte rolig gemytt", "Kan bli svært tam"},
+                          new String[]{"Krever mye plass", "Spiser mye", "Belaster poter og ledd mer"},
+                          new String[]{"Svært romslig opphold", "Godt underlag", "Vektkontroll", "Robuste matskåler og hus"}
+                  );
+
+                  addFooter(root, "Tips: Denne appen gir en enkel oversikt. Ved seriøs avl bør dere også bruke veterinær, raseklubb og oppdretter som kilder.");
+
+                  setContentView(scrollView);
+              }
+
+              private void addTitle(LinearLayout root, String text) {
                   TextView tv = new TextView(this);
-                  tv.setText("Trines kaninguide 🐰");
-                  setContentView(tv);
+                  tv.setText(text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
+                  tv.setTypeface(Typeface.DEFAULT_BOLD);
+                  tv.setTextColor(Color.parseColor("#222222"));
+                  tv.setPadding(0, 0, 0, dp(8));
+                  root.addView(tv);
+              }
+
+              private void addSubtitle(LinearLayout root, String text) {
+                  TextView tv = new TextView(this);
+                  tv.setText(text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  tv.setTextColor(Color.parseColor("#555555"));
+                  tv.setPadding(0, 0, 0, dp(18));
+                  root.addView(tv);
+              }
+
+              private void addSection(LinearLayout root, String text) {
+                  TextView tv = new TextView(this);
+                  tv.setText(text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+                  tv.setTypeface(Typeface.DEFAULT_BOLD);
+                  tv.setTextColor(Color.parseColor("#7A3E00"));
+                  tv.setBackgroundColor(Color.parseColor("#FFF1E2"));
+                  tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.bottomMargin = dp(10);
+                  tv.setLayoutParams(lp);
+                  root.addView(tv);
+              }
+
+              private void addBullet(LinearLayout root, String text) {
+                  TextView tv = new TextView(this);
+                  tv.setText("• " + text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  tv.setTextColor(Color.parseColor("#333333"));
+                  tv.setPadding(dp(8), dp(2), dp(8), dp(2));
+                  root.addView(tv);
+              }
+
+              private void addBreed(LinearLayout root,
+                                    String name,
+                                    String meta,
+                                    String temperament,
+                                    String colors,
+                                    String reproduction,
+                                    String[] pros,
+                                    String[] cons,
+                                    String[] needs) {
+
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setBackgroundColor(Color.WHITE);
+                  card.setPadding(dp(16), dp(16), dp(16), dp(16));
+
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.topMargin = dp(14);
+                  card.setLayoutParams(lp);
+
+                  TextView title = new TextView(this);
+                  title.setText(name);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(Color.parseColor("#111111"));
+                  card.addView(title);
+
+                  TextView metaTv = new TextView(this);
+                  metaTv.setText(meta);
+                  metaTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                  metaTv.setTextColor(Color.parseColor("#666666"));
+                  metaTv.setPadding(0, dp(4), 0, dp(10));
+                  card.addView(metaTv);
+
+                  addLabelValue(card, "Temperament", temperament);
+                  addLabelValue(card, "Vanlige farger", colors);
+                  addLabelValue(card, "Reproduksjon", reproduction);
+
+                  addMiniSection(card, "Fordeler", pros, "#E9F8EC");
+                  addMiniSection(card, "Ulemper", cons, "#FDEDED");
+                  addMiniSection(card, "Hva rasen krever", needs, "#F2F2F2");
+
+                  root.addView(card);
+              }
+
+              private void addLabelValue(LinearLayout parent, String label, String value) {
+                  TextView l = new TextView(this);
+                  l.setText(label);
+                  l.setTypeface(Typeface.DEFAULT_BOLD);
+                  l.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  l.setTextColor(Color.parseColor("#222222"));
+                  l.setPadding(0, dp(8), 0, dp(4));
+                  parent.addView(l);
+
+                  TextView v = new TextView(this);
+                  v.setText(value);
+                  v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                  v.setTextColor(Color.parseColor("#444444"));
+                  parent.addView(v);
+              }
+
+              private void addMiniSection(LinearLayout parent, String title, String[] items, String bgColor) {
+                  LinearLayout box = new LinearLayout(this);
+                  box.setOrientation(LinearLayout.VERTICAL);
+                  box.setBackgroundColor(Color.parseColor(bgColor));
+                  box.setPadding(dp(12), dp(12), dp(12), dp(12));
+
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.topMargin = dp(10);
+                  box.setLayoutParams(lp);
+
+                  TextView t = new TextView(this);
+                  t.setText(title);
+                  t.setTypeface(Typeface.DEFAULT_BOLD);
+                  t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  t.setTextColor(Color.parseColor("#222222"));
+                  t.setPadding(0, 0, 0, dp(6));
+                  box.addView(t);
+
+                  for (String item : items) {
+                      TextView tv = new TextView(this);
+                      tv.setText("• " + item);
+                      tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                      tv.setTextColor(Color.parseColor("#333333"));
+                      tv.setPadding(0, dp(2), 0, dp(2));
+                      box.addView(tv);
+                  }
+
+                  parent.addView(box);
+              }
+
+              private void addFooter(LinearLayout root, String text) {
+                  TextView tv = new TextView(this);
+                  tv.setText(text);
+                  tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                  tv.setTextColor(Color.parseColor("#333333"));
+                  tv.setBackgroundColor(Color.parseColor("#EAE6FF"));
+                  tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+                  tv.setGravity(Gravity.START);
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                  );
+                  lp.topMargin = dp(18);
+                  tv.setLayoutParams(lp);
+                  root.addView(tv);
+              }
+
+              private int dp(int value) {
+                  float density = getResources().getDisplayMetrics().density;
+                  return Math.round(value * density);
               }
           }
           EOF
