@@ -29,7 +29,7 @@ jobs:
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
 
-          echo "<h1>Trines kaninguide</h1>" > app/src/main/assets/index.html
+          echo "<h1>Trines kaninguide 🐰</h1>" > app/src/main/assets/index.html
 
           cat <<EOF > settings.gradle
           pluginManagement {
@@ -61,6 +61,10 @@ jobs:
             id 'com.android.application'
           }
 
+          configurations.all {
+            exclude group: 'org.jetbrains.kotlin'
+          }
+
           android {
             namespace "com.trine.kanin"
             compileSdk 34
@@ -86,7 +90,7 @@ jobs:
           }
 
           dependencies {
-            implementation 'androidx.appcompat:appcompat:1.7.0'
+            implementation 'androidx.appcompat:appcompat:1.6.1'
           }
           EOF
 
