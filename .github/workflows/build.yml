@@ -25,6 +25,8 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/trine/kanin
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
 
           echo "android.useAndroidX=true" > gradle.properties
 
@@ -66,8 +68,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 11
-              versionName "11.0"
+              versionCode 12
+              versionName "12.0"
             }
 
             buildTypes {
@@ -87,8 +89,9 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
                   android:label="Kaninguide"
-                  android:icon="@android:drawable/ic_menu_gallery"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:theme="@style/AppTheme">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
@@ -107,6 +110,62 @@ jobs:
           </resources>
           EOF
 
+          cat <<EOF > app/src/main/res/values/themes.xml
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:windowBackground">@drawable/splash_bg</item>
+              </style>
+          </resources>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/splash_bg.xml
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@android:color/white"/>
+              <item>
+                  <shape android:shape="rectangle">
+                      <solid android:color="#FFF9F5"/>
+                  </shape>
+              </item>
+          </layer-list>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/ic_launcher_foreground.xml
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#FFF9F5"
+                  android:pathData="M0,0h108v108h-108z"/>
+              <path
+                  android:fillColor="#B96E7B"
+                  android:pathData="M54,22c-15,0 -27,10 -27,24c0,11 8,20 18,24l0,10l18,0l0,-10c10,-4 18,-13 18,-24c0,-14 -12,-24 -27,-24z"/>
+              <path
+                  android:fillColor="#D78FA0"
+                  android:pathData="M36,10c-5,0 -8,4 -8,9c0,8 2,15 7,20c2,2 5,2 7,0c2,-2 2,-5 0,-7c-3,-3 -4,-7 -4,-13c0,-4 -1,-9 -2,-9z"/>
+              <path
+                  android:fillColor="#D78FA0"
+                  android:pathData="M72,10c-5,0 -8,5 -8,9c0,6 -1,10 -4,13c-2,2 -2,5 0,7c2,2 5,2 7,0c5,-5 7,-12 7,-20c0,-4 -3,-9 -2,-9z"/>
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M45,48a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M63,48a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
+              <path
+                  android:fillColor="#F7B8C8"
+                  android:pathData="M50,58c0,-2 2,-3 4,-3c2,0 4,1 4,3c0,2 -2,4 -4,4c-2,0 -4,-2 -4,-4z"/>
+          </vector>
+          EOF
+
+          cat <<EOF > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/splash_bg"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
           cat <<'EOF' > app/src/main/java/com/trine/kanin/MainActivity.java
           package com.trine.kanin;
 
@@ -120,6 +179,7 @@ jobs:
           import android.text.Editable;
           import android.text.TextWatcher;
           import android.util.TypedValue;
+          import android.view.Gravity;
           import android.view.View;
           import android.view.ViewGroup;
           import android.widget.ArrayAdapter;
@@ -195,7 +255,7 @@ jobs:
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Monsterversjon med søk, forslag, favoritter, detaljsider, quiz og fargekalkulator.");
+                  subtitle.setText("Søk, filtrer og sammenlign kaninraser, farger, temperament, reproduksjon og stell.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -597,31 +657,6 @@ jobs:
                   contentLayout.addView(tv);
               }
 
-              private void addInfoCard(String heading, String[] lines, int bgColor) {
-                  LinearLayout box = new LinearLayout(this);
-                  box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 24, BORDER, 0));
-                  box.setPadding(dp(16), dp(16), dp(16), dp(16));
-
-                  TextView title = new TextView(this);
-                  title.setText(heading);
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 21);
-                  title.setTypeface(Typeface.DEFAULT_BOLD);
-                  title.setTextColor(TITLE);
-                  box.addView(title);
-
-                  for (String line : lines) {
-                      TextView tv = new TextView(this);
-                      tv.setText("• " + line);
-                      tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                      tv.setTextColor(TEXT);
-                      tv.setPadding(0, dp(8), 0, 0);
-                      box.addView(tv);
-                  }
-
-                  contentLayout.addView(box, matchWrap(dp(14)));
-              }
-
               private LinearLayout createBreedCard(RabbitBreed breed, boolean favorite) {
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
@@ -673,6 +708,30 @@ jobs:
 
                   card.addView(top);
 
+                  LinearLayout imageHolder = new LinearLayout(this);
+                  imageHolder.setOrientation(LinearLayout.VERTICAL);
+                  imageHolder.setGravity(Gravity.CENTER);
+                  imageHolder.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 18, BORDER, 2));
+                  imageHolder.setPadding(dp(12), dp(20), dp(12), dp(20));
+                  LinearLayout.LayoutParams imgLp = matchWrap(0);
+                  imgLp.topMargin = dp(12);
+                  imageHolder.setLayoutParams(imgLp);
+
+                  TextView bunny = new TextView(this);
+                  bunny.setText("🐇");
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
+                  bunny.setGravity(Gravity.CENTER);
+                  imageHolder.addView(bunny);
+
+                  TextView imgText = new TextView(this);
+                  imgText.setText("Bildeplassholder for " + breed.name);
+                  imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                  imgText.setTextColor(TEXT);
+                  imgText.setPadding(0, dp(8), 0, 0);
+                  imageHolder.addView(imgText);
+
+                  card.addView(imageHolder);
+
                   Button details = new Button(this);
                   details.setText("Åpne detaljside");
                   details.setAllCaps(false);
@@ -695,9 +754,33 @@ jobs:
               }
 
               private void showBreedDetail(RabbitBreed breed) {
-                  AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                  builder.setTitle(breed.name);
-                  String msg =
+                  LinearLayout wrapper = new LinearLayout(this);
+                  wrapper.setOrientation(LinearLayout.VERTICAL);
+                  wrapper.setPadding(dp(10), dp(10), dp(10), dp(10));
+
+                  LinearLayout imageHolder = new LinearLayout(this);
+                  imageHolder.setOrientation(LinearLayout.VERTICAL);
+                  imageHolder.setGravity(Gravity.CENTER);
+                  imageHolder.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 18, BORDER, 2));
+                  imageHolder.setPadding(dp(12), dp(20), dp(12), dp(20));
+
+                  TextView bunny = new TextView(this);
+                  bunny.setText("🐇");
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38);
+                  bunny.setGravity(Gravity.CENTER);
+                  imageHolder.addView(bunny);
+
+                  TextView imgText = new TextView(this);
+                  imgText.setText("Bildeplassholder");
+                  imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                  imgText.setTextColor(TEXT);
+                  imgText.setPadding(0, dp(8), 0, 0);
+                  imageHolder.addView(imgText);
+
+                  wrapper.addView(imageHolder);
+
+                  TextView info = new TextView(this);
+                  info.setText(
                           "Størrelse: " + breed.size + "\n" +
                           "Vekt: " + breed.weight + "\n\n" +
                           "Temperament:\n" + breed.temperament + "\n\n" +
@@ -705,10 +788,18 @@ jobs:
                           "Reproduksjon:\n" + breed.reproduction + "\n\n" +
                           "Fordeler:\n" + breed.pros + "\n\n" +
                           "Ulemper:\n" + breed.cons + "\n\n" +
-                          "Hva rasen krever:\n" + breed.needs;
-                  builder.setMessage(msg);
-                  builder.setPositiveButton("Lukk", null);
-                  builder.show();
+                          "Hva rasen krever:\n" + breed.needs
+                  );
+                  info.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                  info.setTextColor(TITLE);
+                  info.setPadding(0, dp(14), 0, 0);
+                  wrapper.addView(info);
+
+                  new AlertDialog.Builder(this)
+                          .setTitle(breed.name)
+                          .setView(wrapper)
+                          .setPositiveButton("Lukk", null)
+                          .show();
               }
 
               private View makeBadge(String text, int bg) {
@@ -772,6 +863,31 @@ jobs:
                   box.addView(text);
 
                   parent.addView(box);
+              }
+
+              private void addInfoCard(String heading, String[] lines, int bgColor) {
+                  LinearLayout box = new LinearLayout(this);
+                  box.setOrientation(LinearLayout.VERTICAL);
+                  box.setBackground(makeRounded(bgColor, 24, BORDER, 0));
+                  box.setPadding(dp(16), dp(16), dp(16), dp(16));
+
+                  TextView title = new TextView(this);
+                  title.setText(heading);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 21);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setTextColor(TITLE);
+                  box.addView(title);
+
+                  for (String line : lines) {
+                      TextView tv = new TextView(this);
+                      tv.setText("• " + line);
+                      tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                      tv.setTextColor(TEXT);
+                      tv.setPadding(0, dp(8), 0, 0);
+                      box.addView(tv);
+                  }
+
+                  contentLayout.addView(box, matchWrap(dp(14)));
               }
 
               private GradientDrawable makeRounded(int color, int radiusDp, int strokeColor, int strokeDp) {
