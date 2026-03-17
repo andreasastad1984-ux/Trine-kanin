@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -66,8 +66,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 9
-              versionName "9.0"
+              versionCode 11
+              versionName "11.0"
             }
 
             buildTypes {
@@ -87,6 +87,7 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
                   android:label="Kaninguide"
+                  android:icon="@android:drawable/ic_menu_gallery"
                   android:theme="@android:style/Theme.Material.Light.NoActionBar">
                   <activity
                       android:name=".MainActivity"
@@ -110,6 +111,7 @@ jobs:
           package com.trine.kanin;
 
           import android.app.Activity;
+          import android.app.AlertDialog;
           import android.content.SharedPreferences;
           import android.graphics.Color;
           import android.graphics.Typeface;
@@ -131,20 +133,23 @@ jobs:
 
           import java.util.ArrayList;
           import java.util.Arrays;
+          import java.util.Collections;
+          import java.util.Comparator;
+          import java.util.HashMap;
           import java.util.List;
           import java.util.Locale;
+          import java.util.Map;
 
           public class MainActivity extends Activity {
 
               private LinearLayout contentLayout;
+              private LinearLayout suggestionBox;
+              private EditText searchInput;
               private final List<RabbitBreed> breeds = new ArrayList<>();
               private String currentQuery = "";
               private String currentSizeFilter = "Alle";
               private boolean favoritesOnly = false;
-              private String fitResult = "";
-              private String colorResult = "";
               private SharedPreferences prefs;
-              private EditText searchInput;
 
               private final int BG = Color.parseColor("#FFF9F5");
               private final int CARD = Color.parseColor("#FFFFFF");
@@ -160,9 +165,6 @@ jobs:
               private final int BORDER = Color.parseColor("#E9DED3");
               private final int PURPLE_BOX = Color.parseColor("#F6F0FF");
               private final int PURPLE_BORDER = Color.parseColor("#E3D9F4");
-              private final int PINK_BOX = Color.parseColor("#FFF6FB");
-              private final int PINK_BORDER = Color.parseColor("#F0D8E7");
-              private final int PURPLE_BUTTON = Color.parseColor("#7C6ACF");
               private final int GOLD_BORDER = Color.parseColor("#E0C56E");
               private final int RESULT_BG = Color.parseColor("#FFFDF5");
 
@@ -187,13 +189,13 @@ jobs:
 
                   TextView title = new TextView(this);
                   title.setText("Kaninguide");
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Søk, filtrer og sammenlign kaninraser, farger, temperament, reproduksjon og stell.");
+                  subtitle.setText("Monsterversjon med søk, forslag, favoritter, detaljsider, quiz og fargekalkulator.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -209,7 +211,14 @@ jobs:
                   searchInput.setTextColor(TITLE);
                   searchInput.setHintTextColor(Color.parseColor("#9C918A"));
                   searchInput.setBackground(makeRounded(CARD, 22, ACCENT, 2));
-                  root.addView(searchInput, matchWrap(dp(12)));
+                  root.addView(searchInput, matchWrap(dp(8)));
+
+                  suggestionBox = new LinearLayout(this);
+                  suggestionBox.setOrientation(LinearLayout.VERTICAL);
+                  suggestionBox.setBackground(makeRounded(Color.parseColor("#FFF7FB"), 20, BORDER, 2));
+                  suggestionBox.setPadding(dp(12), dp(8), dp(12), dp(8));
+                  suggestionBox.setVisibility(View.GONE);
+                  root.addView(suggestionBox, matchWrap(dp(12)));
 
                   HorizontalScrollView hsv = new HorizontalScrollView(this);
                   hsv.setHorizontalScrollBarEnabled(false);
@@ -262,9 +271,47 @@ jobs:
                       @Override
                       public void onTextChanged(CharSequence s, int start, int before, int count) {
                           currentQuery = s.toString();
+                          updateSuggestions();
                           render();
                       }
                   });
+              }
+
+              private void updateSuggestions() {
+                  suggestionBox.removeAllViews();
+
+                  String q = currentQuery == null ? "" : currentQuery.trim().toLowerCase(Locale.ROOT);
+                  if (q.isEmpty()) {
+                      suggestionBox.setVisibility(View.GONE);
+                      return;
+                  }
+
+                  List<RabbitBreed> suggestions = getSuggestions(q);
+                  if (suggestions.isEmpty()) {
+                      suggestionBox.setVisibility(View.GONE);
+                      return;
+                  }
+
+                  suggestionBox.setVisibility(View.VISIBLE);
+
+                  int count = Math.min(5, suggestions.size());
+                  for (int i = 0; i < count; i++) {
+                      RabbitBreed breed = suggestions.get(i);
+
+                      TextView row = new TextView(this);
+                      row.setText("• " + breed.name + "  (" + breed.size + ")");
+                      row.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                      row.setTextColor(TITLE);
+                      row.setPadding(dp(6), dp(10), dp(6), dp(10));
+                      row.setOnClickListener(v -> {
+                          searchInput.setText(breed.name);
+                          searchInput.setSelection(breed.name.length());
+                          suggestionBox.setVisibility(View.GONE);
+                          showBreedDetail(breed);
+                      });
+
+                      suggestionBox.addView(row);
+                  }
               }
 
               private void render() {
@@ -281,13 +328,8 @@ jobs:
                           PEACH
                   );
 
-                  addFitGuideCard();
+                  addQuizCard();
                   addColorCalculatorCard();
-
-                  List<RabbitBreed> suggestions = getSuggestions(currentQuery);
-                  if (!currentQuery.trim().isEmpty() && !suggestions.isEmpty()) {
-                      addSuggestionCard(suggestions);
-                  }
 
                   List<RabbitBreed> favorites = new ArrayList<>();
                   List<RabbitBreed> normal = new ArrayList<>();
@@ -341,42 +383,11 @@ jobs:
                   }
               }
 
-              private void addSuggestionCard(List<RabbitBreed> suggestions) {
-                  LinearLayout box = new LinearLayout(this);
-                  box.setOrientation(LinearLayout.VERTICAL);
-                  box.setPadding(dp(16), dp(16), dp(16), dp(16));
-                  box.setBackground(makeRounded(PURPLE_BOX, 22, PURPLE_BORDER, 2));
-
-                  TextView title = new TextView(this);
-                  title.setText("Forslag");
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-                  title.setTypeface(Typeface.DEFAULT_BOLD);
-                  title.setTextColor(TITLE);
-                  box.addView(title);
-
-                  int count = Math.min(4, suggestions.size());
-                  for (int i = 0; i < count; i++) {
-                      RabbitBreed breed = suggestions.get(i);
-                      TextView item = new TextView(this);
-                      item.setText("• " + breed.name + " (" + breed.size + ")");
-                      item.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                      item.setTextColor(TEXT);
-                      item.setPadding(0, dp(8), 0, 0);
-                      item.setOnClickListener(v -> {
-                          searchInput.setText(breed.name);
-                          searchInput.setSelection(breed.name.length());
-                      });
-                      box.addView(item);
-                  }
-
-                  contentLayout.addView(box, matchWrap(dp(14)));
-              }
-
-              private void addFitGuideCard() {
+              private void addQuizCard() {
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(16), dp(16), dp(16), dp(16));
-                  card.setBackground(makeRounded(PINK_BOX, 24, PINK_BORDER, 2));
+                  card.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 24, Color.parseColor("#F0D8E7"), 2));
 
                   TextView title = new TextView(this);
                   title.setText("Hvilken rase passer meg?");
@@ -386,33 +397,33 @@ jobs:
                   card.addView(title);
 
                   TextView desc = new TextView(this);
-                  desc.setText("Velg det som passer best, og få et enkelt forslag.");
+                  desc.setText("Velg det som passer best, og få topp 3 forslag.");
                   desc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                   desc.setTextColor(TEXT);
                   desc.setPadding(0, dp(6), 0, dp(10));
                   card.addView(desc);
 
                   Spinner sizeSpinner = new Spinner(this);
-                  List<String> sizes = Arrays.asList("Liten", "Mellomstor", "Stor");
-                  sizeSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, sizes));
+                  sizeSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                          Arrays.asList("Liten", "Mellomstor", "Stor")));
                   card.addView(sizeSpinner);
 
                   Spinner temperSpinner = new Spinner(this);
-                  List<String> tempers = Arrays.asList("Rolig", "Aktiv", "Familievennlig", "Mye stell");
-                  temperSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, tempers));
+                  temperSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                          Arrays.asList("Rolig", "Aktiv", "Familievennlig", "Mye stell")));
                   LinearLayout.LayoutParams temperLp = matchWrap(0);
                   temperLp.topMargin = dp(10);
                   card.addView(temperSpinner, temperLp);
 
                   Spinner careSpinner = new Spinner(this);
-                  List<String> care = Arrays.asList("Lite stell", "Middels", "Mye stell");
-                  careSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, care));
+                  careSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                          Arrays.asList("Lite stell", "Middels", "Mye stell")));
                   LinearLayout.LayoutParams careLp = matchWrap(0);
                   careLp.topMargin = dp(10);
                   card.addView(careSpinner, careLp);
 
                   Button btn = new Button(this);
-                  btn.setText("Finn rase");
+                  btn.setText("Vis topp 3");
                   btn.setAllCaps(false);
                   btn.setBackground(makeRounded(ACCENT, 18, ACCENT, 0));
                   btn.setTextColor(Color.WHITE);
@@ -421,7 +432,7 @@ jobs:
                   card.addView(btn, btnLp);
 
                   TextView result = new TextView(this);
-                  result.setText(fitResult.isEmpty() ? "Ingen anbefaling valgt ennå." : fitResult);
+                  result.setText("Ingen anbefaling valgt ennå.");
                   result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   result.setTextColor(TEXT);
                   result.setPadding(dp(12), dp(12), dp(12), dp(12));
@@ -434,8 +445,7 @@ jobs:
                       String s = sizeSpinner.getSelectedItem().toString();
                       String t = temperSpinner.getSelectedItem().toString();
                       String c = careSpinner.getSelectedItem().toString();
-                      fitResult = getFitResult(s, t, c);
-                      render();
+                      result.setText(getTop3Result(s, t, c));
                   });
 
                   contentLayout.addView(card, matchWrap(dp(14)));
@@ -448,14 +458,14 @@ jobs:
                   card.setBackground(makeRounded(PURPLE_BOX, 24, PURPLE_BORDER, 2));
 
                   TextView title = new TextView(this);
-                  title.setText("Enkel fargekalkulator");
+                  title.setText("Bedre fargekalkulator");
                   title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
                   card.addView(title);
 
                   TextView desc = new TextView(this);
-                  desc.setText("Velg farge på mor og far for å få et veiledende resultat.");
+                  desc.setText("Velg farge på mor og far for å få flere mulige utfall.");
                   desc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                   desc.setTextColor(TEXT);
                   desc.setPadding(0, dp(6), 0, dp(10));
@@ -476,14 +486,14 @@ jobs:
                   Button btn = new Button(this);
                   btn.setText("Beregn");
                   btn.setAllCaps(false);
-                  btn.setBackground(makeRounded(PURPLE_BUTTON, 18, PURPLE_BUTTON, 0));
+                  btn.setBackground(makeRounded(Color.parseColor("#7C6ACF"), 18, Color.parseColor("#7C6ACF"), 0));
                   btn.setTextColor(Color.WHITE);
                   LinearLayout.LayoutParams btnLp = matchWrap(0);
                   btnLp.topMargin = dp(12);
                   card.addView(btn, btnLp);
 
                   TextView result = new TextView(this);
-                  result.setText(colorResult.isEmpty() ? "Ingen beregning ennå." : colorResult);
+                  result.setText("Ingen beregning ennå.");
                   result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   result.setTextColor(TEXT);
                   result.setPadding(dp(12), dp(12), dp(12), dp(12));
@@ -495,11 +505,71 @@ jobs:
                   btn.setOnClickListener(v -> {
                       String m = mother.getSelectedItem().toString();
                       String f = father.getSelectedItem().toString();
-                      colorResult = getColorResult(m, f);
-                      render();
+                      result.setText(getBetterColorResult(m, f));
                   });
 
                   contentLayout.addView(card, matchWrap(dp(14)));
+              }
+
+              private String getTop3Result(String size, String temper, String care) {
+                  Map<String, Integer> scores = new HashMap<>();
+                  for (RabbitBreed b : breeds) scores.put(b.name, 0);
+
+                  for (RabbitBreed b : breeds) {
+                      int score = 0;
+
+                      if (b.size.equals(size)) score += 3;
+                      if (b.tag.toLowerCase(Locale.ROOT).contains(temper.toLowerCase(Locale.ROOT))) score += 3;
+                      if (temper.equals("Familievennlig") && b.tag.toLowerCase(Locale.ROOT).contains("familie")) score += 2;
+                      if (temper.equals("Rolig") && b.temperament.toLowerCase(Locale.ROOT).contains("rolig")) score += 2;
+                      if (temper.equals("Aktiv") && b.temperament.toLowerCase(Locale.ROOT).contains("aktiv")) score += 2;
+                      if (care.equals("Mye stell") && b.tag.toLowerCase(Locale.ROOT).contains("stell")) score += 2;
+                      if (care.equals("Lite stell") && !b.tag.toLowerCase(Locale.ROOT).contains("stell")) score += 1;
+
+                      scores.put(b.name, score);
+                  }
+
+                  List<Map.Entry<String, Integer>> list = new ArrayList<>(scores.entrySet());
+                  Collections.sort(list, (a, b) -> b.getValue().compareTo(a.getValue()));
+
+                  StringBuilder sb = new StringBuilder();
+                  sb.append("Topp 3 forslag:\n");
+                  for (int i = 0; i < Math.min(3, list.size()); i++) {
+                      String name = list.get(i).getKey();
+                      RabbitBreed breed = findBreed(name);
+                      sb.append(i + 1).append(". ").append(name);
+                      if (breed != null) {
+                          sb.append(" – ").append(breed.tag);
+                      }
+                      sb.append("\n");
+                  }
+                  return sb.toString().trim();
+              }
+
+              private String getBetterColorResult(String mother, String father) {
+                  if (mother.equals("Blå") && father.equals("Blå")) {
+                      return "Mulige utfall:\n• Blå\n• Hovedsakelig blå avkom\n• Fortsatt avhengig av skjulte gener";
+                  }
+                  if (mother.equals("Hvit rødøyd") || father.equals("Hvit rødøyd")) {
+                      return "Mulige utfall:\n• Hvit rødøyd\n• Andre skjulte farger kan dukke opp\n• Denne kombinasjonen er mindre forutsigbar";
+                  }
+                  if (mother.equals("Viltgrå") && father.equals("Viltgrå")) {
+                      return "Mulige utfall:\n• Viltgrå\n• Mørkere variasjoner\n• Andre nyanser hvis foreldrene bærer skjulte gener";
+                  }
+                  if (mother.equals("Svart") && father.equals("Svart")) {
+                      return "Mulige utfall:\n• Svart\n• Mørke variasjoner\n• Skjulte gener kan påvirke";
+                  }
+                  if (mother.equals("Japaner") || father.equals("Japaner")) {
+                      return "Mulige utfall:\n• Japaner-tegninger\n• Ulike markeringer\n• Vanskelig å forutsi helt nøyaktig";
+                  }
+                  return "Mulige utfall:\n• Flere varianter\n• Blanding av foreldrefarger\n• Resultatet er kun veiledende";
+              }
+
+              private RabbitBreed findBreed(String name) {
+                  for (RabbitBreed b : breeds) {
+                      if (b.name.equals(name)) return b;
+                  }
+                  return null;
               }
 
               private List<RabbitBreed> getSuggestions(String query) {
@@ -512,26 +582,9 @@ jobs:
                           out.add(breed);
                       }
                   }
+
+                  Collections.sort(out, Comparator.comparing(a -> a.name));
                   return out;
-              }
-
-              private String getFitResult(String size, String temperament, String care) {
-                  if (size.equals("Liten") && temperament.equals("Familievennlig")) return "Forslag: Dvergvedder – liten og ofte fin som familiekanin.";
-                  if (size.equals("Liten") && care.equals("Mye stell")) return "Forslag: Løvehode – liten og flott, men krever mer pelsstell.";
-                  if (size.equals("Mellomstor") && temperament.equals("Rolig")) return "Forslag: Rex – rolig, vennlig og fin størrelse.";
-                  if (size.equals("Mellomstor") && temperament.equals("Aktiv")) return "Forslag: Belgisk hare – aktiv og elegant.";
-                  if (size.equals("Stor") && temperament.equals("Rolig")) return "Forslag: Fransk vedder – stor, tung og ofte rolig.";
-                  if (size.equals("Stor") && temperament.equals("Familievennlig")) return "Forslag: New Zealand – robust og grei i større kaninhold.";
-                  return "Forslag: Se både Dvergvedder, Rex og New Zealand – de er gode allround-valg.";
-              }
-
-              private String getColorResult(String mother, String father) {
-                  if (mother.equals("Blå") && father.equals("Blå")) return "Mulig utfall: ofte blå unger.";
-                  if (mother.equals("Hvit rødøyd") || father.equals("Hvit rødøyd")) return "Mulig utfall: hvit rødøyd kan skjule andre farger.";
-                  if (mother.equals("Viltgrå") && father.equals("Viltgrå")) return "Mulig utfall: ofte viltgrå, men også andre variasjoner kan dukke opp.";
-                  if (mother.equals("Svart") && father.equals("Svart")) return "Mulig utfall: ofte svart, men skjulte gener kan gi variasjon.";
-                  if (mother.equals("Japaner") || father.equals("Japaner")) return "Mulig utfall: japaner kan gi spennende og varierte tegninger.";
-                  return "Mulig utfall: flere varianter. Resultatet er veiledende og avhenger av skjulte gener.";
               }
 
               private void addMiniHeadline(String text) {
@@ -588,6 +641,7 @@ jobs:
                   title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
+                  title.setOnClickListener(v -> showBreedDetail(breed));
                   left.addView(title);
 
                   TextView meta = new TextView(this);
@@ -619,6 +673,16 @@ jobs:
 
                   card.addView(top);
 
+                  Button details = new Button(this);
+                  details.setText("Åpne detaljside");
+                  details.setAllCaps(false);
+                  details.setBackground(makeRounded(Color.parseColor("#F7F1EB"), 16, BORDER, 2));
+                  details.setTextColor(TITLE);
+                  LinearLayout.LayoutParams detailsLp = matchWrap(0);
+                  detailsLp.topMargin = dp(10);
+                  card.addView(details, detailsLp);
+                  details.setOnClickListener(v -> showBreedDetail(breed));
+
                   addLabelValue(card, "Temperament", breed.temperament);
                   addLabelValue(card, "Vanlige farger", breed.colors);
                   addLabelValue(card, "Reproduksjon", breed.reproduction);
@@ -628,6 +692,23 @@ jobs:
                   addBox(card, "Hva rasen krever", breed.needs, SAND);
 
                   return card;
+              }
+
+              private void showBreedDetail(RabbitBreed breed) {
+                  AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                  builder.setTitle(breed.name);
+                  String msg =
+                          "Størrelse: " + breed.size + "\n" +
+                          "Vekt: " + breed.weight + "\n\n" +
+                          "Temperament:\n" + breed.temperament + "\n\n" +
+                          "Vanlige farger:\n" + breed.colors + "\n\n" +
+                          "Reproduksjon:\n" + breed.reproduction + "\n\n" +
+                          "Fordeler:\n" + breed.pros + "\n\n" +
+                          "Ulemper:\n" + breed.cons + "\n\n" +
+                          "Hva rasen krever:\n" + breed.needs;
+                  builder.setMessage(msg);
+                  builder.setPositiveButton("Lukk", null);
+                  builder.show();
               }
 
               private View makeBadge(String text, int bg) {
