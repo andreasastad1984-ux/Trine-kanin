@@ -3,6 +3,7 @@ name: Build APK
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,6 +24,7 @@ jobs:
       - name: Create project
         run: |
           mkdir -p app/src/main/assets
+          mkdir -p app/src/main/java/com/trine/kanin
 
           echo "<h1>Trines kaninguide</h1>" > app/src/main/assets/index.html
 
@@ -32,6 +34,13 @@ jobs:
               google()
               mavenCentral()
               gradlePluginPortal()
+            }
+          }
+          dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+              google()
+              mavenCentral()
             }
           }
           rootProject.name="app"
@@ -60,6 +69,57 @@ jobs:
               versionCode 1
               versionName "1.0"
             }
+
+            buildTypes {
+              release {
+                minifyEnabled false
+              }
+            }
+
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+            }
+          }
+
+          dependencies {
+            implementation 'androidx.appcompat:appcompat:1.7.0'
+          }
+          EOF
+
+          cat <<EOF > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:label="Trines kaninguide"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat <<EOF > app/src/main/java/com/trine/kanin/MainActivity.java
+          package com.trine.kanin;
+
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  WebView webView = new WebView(this);
+                  webView.getSettings().setJavaScriptEnabled(true);
+                  setContentView(webView);
+                  webView.loadUrl("file:///android_asset/index.html");
+              }
           }
           EOF
 
