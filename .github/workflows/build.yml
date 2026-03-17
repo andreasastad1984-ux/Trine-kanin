@@ -23,13 +23,9 @@ jobs:
 
       - name: Create project
         run: |
-          mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/trine/kanin
 
           echo "android.useAndroidX=true" > gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
-
-          echo "<h1>Trines kaninguide 🐰</h1>" > app/src/main/assets/index.html
 
           cat <<EOF > settings.gradle
           pluginManagement {
@@ -61,10 +57,6 @@ jobs:
             id 'com.android.application'
           }
 
-          configurations.all {
-            exclude group: 'org.jetbrains.kotlin'
-          }
-
           android {
             namespace "com.trine.kanin"
             compileSdk 34
@@ -88,10 +80,6 @@ jobs:
               targetCompatibility JavaVersion.VERSION_17
             }
           }
-
-          dependencies {
-            implementation 'androidx.appcompat:appcompat:1.6.1'
-          }
           EOF
 
           cat <<EOF > app/src/main/AndroidManifest.xml
@@ -114,18 +102,17 @@ jobs:
           cat <<EOF > app/src/main/java/com/trine/kanin/MainActivity.java
           package com.trine.kanin;
 
+          import android.app.Activity;
           import android.os.Bundle;
-          import android.webkit.WebView;
-          import androidx.appcompat.app.AppCompatActivity;
+          import android.widget.TextView;
 
-          public class MainActivity extends AppCompatActivity {
+          public class MainActivity extends Activity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
-                  WebView webView = new WebView(this);
-                  webView.getSettings().setJavaScriptEnabled(true);
-                  setContentView(webView);
-                  webView.loadUrl("file:///android_asset/index.html");
+                  TextView tv = new TextView(this);
+                  tv.setText("Trines kaninguide 🐰");
+                  setContentView(tv);
               }
           }
           EOF
