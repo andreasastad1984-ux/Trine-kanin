@@ -66,8 +66,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 8
-              versionName "8.0"
+              versionCode 9
+              versionName "9.0"
             }
 
             buildTypes {
@@ -164,6 +164,7 @@ jobs:
               private final int PINK_BORDER = Color.parseColor("#F0D8E7");
               private final int PURPLE_BUTTON = Color.parseColor("#7C6ACF");
               private final int GOLD_BORDER = Color.parseColor("#E0C56E");
+              private final int RESULT_BG = Color.parseColor("#FFFDF5");
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -201,19 +202,20 @@ jobs:
                   root.addView(hero, matchWrap(dp(12)));
 
                   searchInput = new EditText(this);
-                  searchInput.setHint("Søk etter rase, farge, temperament...");
+                  searchInput.setHint("🔎 Søk etter rase, farge, temperament...");
                   searchInput.setSingleLine(true);
                   searchInput.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   searchInput.setPadding(dp(16), dp(14), dp(16), dp(14));
                   searchInput.setTextColor(TITLE);
                   searchInput.setHintTextColor(Color.parseColor("#9C918A"));
-                  searchInput.setBackground(makeRounded(CARD, 22, BORDER, 2));
+                  searchInput.setBackground(makeRounded(CARD, 22, ACCENT, 2));
                   root.addView(searchInput, matchWrap(dp(12)));
 
                   HorizontalScrollView hsv = new HorizontalScrollView(this);
                   hsv.setHorizontalScrollBarEnabled(false);
                   LinearLayout filterRow = new LinearLayout(this);
                   filterRow.setOrientation(LinearLayout.HORIZONTAL);
+                  filterRow.setPadding(0, 0, dp(24), 0);
                   hsv.addView(filterRow);
                   root.addView(hsv, matchWrap(dp(12)));
 
@@ -269,7 +271,7 @@ jobs:
                   contentLayout.removeAllViews();
 
                   addInfoCard(
-                          "Farger og avl – enkelt forklart",
+                          "🐇 Farger og avl – enkelt forklart",
                           new String[]{
                                   "Blå + blå gir ofte blå unger.",
                                   "Hvit rødøyd kan skjule andre farger.",
@@ -402,6 +404,13 @@ jobs:
                   temperLp.topMargin = dp(10);
                   card.addView(temperSpinner, temperLp);
 
+                  Spinner careSpinner = new Spinner(this);
+                  List<String> care = Arrays.asList("Lite stell", "Middels", "Mye stell");
+                  careSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, care));
+                  LinearLayout.LayoutParams careLp = matchWrap(0);
+                  careLp.topMargin = dp(10);
+                  card.addView(careSpinner, careLp);
+
                   Button btn = new Button(this);
                   btn.setText("Finn rase");
                   btn.setAllCaps(false);
@@ -415,13 +424,17 @@ jobs:
                   result.setText(fitResult.isEmpty() ? "Ingen anbefaling valgt ennå." : fitResult);
                   result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   result.setTextColor(TEXT);
-                  result.setPadding(0, dp(12), 0, 0);
-                  card.addView(result);
+                  result.setPadding(dp(12), dp(12), dp(12), dp(12));
+                  result.setBackground(makeRounded(RESULT_BG, 18, BORDER, 2));
+                  LinearLayout.LayoutParams resultLp = matchWrap(0);
+                  resultLp.topMargin = dp(12);
+                  card.addView(result, resultLp);
 
                   btn.setOnClickListener(v -> {
                       String s = sizeSpinner.getSelectedItem().toString();
                       String t = temperSpinner.getSelectedItem().toString();
-                      fitResult = getFitResult(s, t);
+                      String c = careSpinner.getSelectedItem().toString();
+                      fitResult = getFitResult(s, t, c);
                       render();
                   });
 
@@ -473,8 +486,11 @@ jobs:
                   result.setText(colorResult.isEmpty() ? "Ingen beregning ennå." : colorResult);
                   result.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   result.setTextColor(TEXT);
-                  result.setPadding(0, dp(12), 0, 0);
-                  card.addView(result);
+                  result.setPadding(dp(12), dp(12), dp(12), dp(12));
+                  result.setBackground(makeRounded(RESULT_BG, 18, BORDER, 2));
+                  LinearLayout.LayoutParams resultLp = matchWrap(0);
+                  resultLp.topMargin = dp(12);
+                  card.addView(result, resultLp);
 
                   btn.setOnClickListener(v -> {
                       String m = mother.getSelectedItem().toString();
@@ -499,9 +515,9 @@ jobs:
                   return out;
               }
 
-              private String getFitResult(String size, String temperament) {
+              private String getFitResult(String size, String temperament, String care) {
                   if (size.equals("Liten") && temperament.equals("Familievennlig")) return "Forslag: Dvergvedder – liten og ofte fin som familiekanin.";
-                  if (size.equals("Liten") && temperament.equals("Mye stell")) return "Forslag: Løvehode – liten og flott, men krever mer pelsstell.";
+                  if (size.equals("Liten") && care.equals("Mye stell")) return "Forslag: Løvehode – liten og flott, men krever mer pelsstell.";
                   if (size.equals("Mellomstor") && temperament.equals("Rolig")) return "Forslag: Rex – rolig, vennlig og fin størrelse.";
                   if (size.equals("Mellomstor") && temperament.equals("Aktiv")) return "Forslag: Belgisk hare – aktiv og elegant.";
                   if (size.equals("Stor") && temperament.equals("Rolig")) return "Forslag: Fransk vedder – stor, tung og ofte rolig.";
