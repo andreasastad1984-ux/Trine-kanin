@@ -68,8 +68,8 @@ jobs:
               applicationId "com.trine.kanin"
               minSdk 24
               targetSdk 34
-              versionCode 12
-              versionName "12.0"
+              versionCode 13
+              versionName "13.0"
             }
 
             buildTypes {
@@ -120,7 +120,6 @@ jobs:
 
           cat <<EOF > app/src/main/res/drawable/splash_bg.xml
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:drawable="@android:color/white"/>
               <item>
                   <shape android:shape="rectangle">
                       <solid android:color="#FFF9F5"/>
@@ -135,27 +134,13 @@ jobs:
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
-              <path
-                  android:fillColor="#FFF9F5"
-                  android:pathData="M0,0h108v108h-108z"/>
-              <path
-                  android:fillColor="#B96E7B"
-                  android:pathData="M54,22c-15,0 -27,10 -27,24c0,11 8,20 18,24l0,10l18,0l0,-10c10,-4 18,-13 18,-24c0,-14 -12,-24 -27,-24z"/>
-              <path
-                  android:fillColor="#D78FA0"
-                  android:pathData="M36,10c-5,0 -8,4 -8,9c0,8 2,15 7,20c2,2 5,2 7,0c2,-2 2,-5 0,-7c-3,-3 -4,-7 -4,-13c0,-4 -1,-9 -2,-9z"/>
-              <path
-                  android:fillColor="#D78FA0"
-                  android:pathData="M72,10c-5,0 -8,5 -8,9c0,6 -1,10 -4,13c-2,2 -2,5 0,7c2,2 5,2 7,0c5,-5 7,-12 7,-20c0,-4 -3,-9 -2,-9z"/>
-              <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M45,48a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
-              <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M63,48a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
-              <path
-                  android:fillColor="#F7B8C8"
-                  android:pathData="M50,58c0,-2 2,-3 4,-3c2,0 4,1 4,3c0,2 -2,4 -4,4c-2,0 -4,-2 -4,-4z"/>
+              <path android:fillColor="#FFF9F5" android:pathData="M0,0h108v108h-108z"/>
+              <path android:fillColor="#B96E7B" android:pathData="M54,24c-15,0 -27,10 -27,24c0,12 8,21 18,25l0,9l18,0l0,-9c10,-4 18,-13 18,-25c0,-14 -12,-24 -27,-24z"/>
+              <path android:fillColor="#D78FA0" android:pathData="M36,11c-5,0 -8,4 -8,9c0,8 2,15 7,20c2,2 5,2 7,0c2,-2 2,-5 0,-7c-3,-3 -4,-7 -4,-13c0,-4 -1,-9 -2,-9z"/>
+              <path android:fillColor="#D78FA0" android:pathData="M72,11c-5,0 -8,5 -8,9c0,6 -1,10 -4,13c-2,2 -2,5 0,7c2,2 5,2 7,0c5,-5 7,-12 7,-20c0,-4 -3,-9 -2,-9z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M45,49a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M63,49a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z"/>
+              <path android:fillColor="#F7B8C8" android:pathData="M50,59c0,-2 2,-3 4,-3c2,0 4,1 4,3c0,2 -2,4 -4,4c-2,0 -4,-2 -4,-4z"/>
           </vector>
           EOF
 
@@ -215,6 +200,7 @@ jobs:
               private final int CARD = Color.parseColor("#FFFFFF");
               private final int TITLE = Color.parseColor("#2F2A2A");
               private final int TEXT = Color.parseColor("#5B5451");
+              private final int SOFT_TEXT = Color.parseColor("#7C726C");
               private final int PINK = Color.parseColor("#F9DDE3");
               private final int PEACH = Color.parseColor("#FDE8D7");
               private final int SAGE = Color.parseColor("#E4F0E8");
@@ -227,6 +213,8 @@ jobs:
               private final int PURPLE_BORDER = Color.parseColor("#E3D9F4");
               private final int GOLD_BORDER = Color.parseColor("#E0C56E");
               private final int RESULT_BG = Color.parseColor("#FFFDF5");
+              private final int IMAGE_BG = Color.parseColor("#FFF6FB");
+              private final int CTA_BG = Color.parseColor("#F7F1EB");
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -245,17 +233,17 @@ jobs:
                   LinearLayout hero = new LinearLayout(this);
                   hero.setOrientation(LinearLayout.VERTICAL);
                   hero.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  hero.setBackground(makeRounded(CARD, 28, BORDER, 2));
+                  hero.setBackground(makeRounded(CARD, 30, BORDER, 2));
 
                   TextView title = new TextView(this);
                   title.setText("Kaninguide");
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 36);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
                   hero.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("Søk, filtrer og sammenlign kaninraser, farger, temperament, reproduksjon og stell.");
+                  subtitle.setText("Ekstrem versjon med søk, forslag, favoritter, detaljsider, quiz og bedre kalkulator.");
                   subtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                   subtitle.setTextColor(TEXT);
                   subtitle.setPadding(0, dp(8), 0, 0);
@@ -279,6 +267,8 @@ jobs:
                   suggestionBox.setPadding(dp(12), dp(8), dp(12), dp(8));
                   suggestionBox.setVisibility(View.GONE);
                   root.addView(suggestionBox, matchWrap(dp(12)));
+
+                  addQuickPicks(root);
 
                   HorizontalScrollView hsv = new HorizontalScrollView(this);
                   hsv.setHorizontalScrollBarEnabled(false);
@@ -337,6 +327,49 @@ jobs:
                   });
               }
 
+              private void addQuickPicks(LinearLayout root) {
+                  TextView h = new TextView(this);
+                  h.setText("Hurtigvalg");
+                  h.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                  h.setTypeface(Typeface.DEFAULT_BOLD);
+                  h.setTextColor(TITLE);
+                  h.setPadding(dp(4), dp(6), dp(4), dp(8));
+                  root.addView(h);
+
+                  HorizontalScrollView hsv = new HorizontalScrollView(this);
+                  hsv.setHorizontalScrollBarEnabled(false);
+
+                  LinearLayout row = new LinearLayout(this);
+                  row.setOrientation(LinearLayout.HORIZONTAL);
+                  row.setPadding(0, 0, dp(20), 0);
+                  hsv.addView(row);
+
+                  String[] chips = new String[]{"Familievennlig", "Rolig", "Mye stell", "Stor", "Liten"};
+                  for (String chip : chips) {
+                      Button b = new Button(this);
+                      b.setAllCaps(false);
+                      b.setText(chip);
+                      b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                      b.setTextColor(TITLE);
+                      b.setBackground(makeRounded(Color.parseColor("#FFF7F1"), 18, BORDER, 2));
+                      LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                              ViewGroup.LayoutParams.WRAP_CONTENT,
+                              ViewGroup.LayoutParams.WRAP_CONTENT
+                      );
+                      lp.rightMargin = dp(8);
+                      b.setLayoutParams(lp);
+
+                      b.setOnClickListener(v -> {
+                          searchInput.setText(chip);
+                          searchInput.setSelection(chip.length());
+                      });
+
+                      row.addView(b);
+                  }
+
+                  root.addView(hsv, matchWrap(dp(12)));
+              }
+
               private void updateSuggestions() {
                   suggestionBox.removeAllViews();
 
@@ -358,19 +391,32 @@ jobs:
                   for (int i = 0; i < count; i++) {
                       RabbitBreed breed = suggestions.get(i);
 
-                      TextView row = new TextView(this);
-                      row.setText("• " + breed.name + "  (" + breed.size + ")");
-                      row.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                      row.setTextColor(TITLE);
-                      row.setPadding(dp(6), dp(10), dp(6), dp(10));
-                      row.setOnClickListener(v -> {
+                      LinearLayout item = new LinearLayout(this);
+                      item.setOrientation(LinearLayout.VERTICAL);
+                      item.setPadding(dp(8), dp(10), dp(8), dp(10));
+
+                      TextView line1 = new TextView(this);
+                      line1.setText(breed.name);
+                      line1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                      line1.setTypeface(Typeface.DEFAULT_BOLD);
+                      line1.setTextColor(TITLE);
+                      item.addView(line1);
+
+                      TextView line2 = new TextView(this);
+                      line2.setText(breed.size + " • " + breed.tag);
+                      line2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                      line2.setTextColor(SOFT_TEXT);
+                      line2.setPadding(0, dp(2), 0, 0);
+                      item.addView(line2);
+
+                      item.setOnClickListener(v -> {
                           searchInput.setText(breed.name);
                           searchInput.setSelection(breed.name.length());
                           suggestionBox.setVisibility(View.GONE);
                           showBreedDetail(breed);
                       });
 
-                      suggestionBox.addView(row);
+                      suggestionBox.addView(item);
                   }
               }
 
@@ -447,7 +493,7 @@ jobs:
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(16), dp(16), dp(16), dp(16));
-                  card.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 24, Color.parseColor("#F0D8E7"), 2));
+                  card.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 26, Color.parseColor("#F0D8E7"), 2));
 
                   TextView title = new TextView(this);
                   title.setText("Hvilken rase passer meg?");
@@ -485,7 +531,7 @@ jobs:
                   Button btn = new Button(this);
                   btn.setText("Vis topp 3");
                   btn.setAllCaps(false);
-                  btn.setBackground(makeRounded(ACCENT, 18, ACCENT, 0));
+                  btn.setBackground(makeRounded(ACCENT, 20, ACCENT, 0));
                   btn.setTextColor(Color.WHITE);
                   LinearLayout.LayoutParams btnLp = matchWrap(0);
                   btnLp.topMargin = dp(12);
@@ -515,7 +561,7 @@ jobs:
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(16), dp(16), dp(16), dp(16));
-                  card.setBackground(makeRounded(PURPLE_BOX, 24, PURPLE_BORDER, 2));
+                  card.setBackground(makeRounded(PURPLE_BOX, 26, PURPLE_BORDER, 2));
 
                   TextView title = new TextView(this);
                   title.setText("Bedre fargekalkulator");
@@ -546,7 +592,7 @@ jobs:
                   Button btn = new Button(this);
                   btn.setText("Beregn");
                   btn.setAllCaps(false);
-                  btn.setBackground(makeRounded(Color.parseColor("#7C6ACF"), 18, Color.parseColor("#7C6ACF"), 0));
+                  btn.setBackground(makeRounded(Color.parseColor("#7C6ACF"), 20, Color.parseColor("#7C6ACF"), 0));
                   btn.setTextColor(Color.WHITE);
                   LinearLayout.LayoutParams btnLp = matchWrap(0);
                   btnLp.topMargin = dp(12);
@@ -577,7 +623,6 @@ jobs:
 
                   for (RabbitBreed b : breeds) {
                       int score = 0;
-
                       if (b.size.equals(size)) score += 3;
                       if (b.tag.toLowerCase(Locale.ROOT).contains(temper.toLowerCase(Locale.ROOT))) score += 3;
                       if (temper.equals("Familievennlig") && b.tag.toLowerCase(Locale.ROOT).contains("familie")) score += 2;
@@ -585,7 +630,6 @@ jobs:
                       if (temper.equals("Aktiv") && b.temperament.toLowerCase(Locale.ROOT).contains("aktiv")) score += 2;
                       if (care.equals("Mye stell") && b.tag.toLowerCase(Locale.ROOT).contains("stell")) score += 2;
                       if (care.equals("Lite stell") && !b.tag.toLowerCase(Locale.ROOT).contains("stell")) score += 1;
-
                       scores.put(b.name, score);
                   }
 
@@ -598,9 +642,7 @@ jobs:
                       String name = list.get(i).getKey();
                       RabbitBreed breed = findBreed(name);
                       sb.append(i + 1).append(". ").append(name);
-                      if (breed != null) {
-                          sb.append(" – ").append(breed.tag);
-                      }
+                      if (breed != null) sb.append(" – ").append(breed.tag);
                       sb.append("\n");
                   }
                   return sb.toString().trim();
@@ -638,9 +680,7 @@ jobs:
                   if (q.isEmpty()) return out;
 
                   for (RabbitBreed breed : breeds) {
-                      if (breed.searchText().contains(q)) {
-                          out.add(breed);
-                      }
+                      if (breed.searchText().contains(q)) out.add(breed);
                   }
 
                   Collections.sort(out, Comparator.comparing(a -> a.name));
@@ -661,7 +701,7 @@ jobs:
                   LinearLayout card = new LinearLayout(this);
                   card.setOrientation(LinearLayout.VERTICAL);
                   card.setPadding(dp(18), dp(18), dp(18), dp(18));
-                  card.setBackground(makeRounded(CARD, 26, BORDER, 2));
+                  card.setBackground(makeRounded(CARD, 28, BORDER, 2));
 
                   LinearLayout top = new LinearLayout(this);
                   top.setOrientation(LinearLayout.HORIZONTAL);
@@ -673,7 +713,7 @@ jobs:
 
                   TextView title = new TextView(this);
                   title.setText(breed.name);
-                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+                  title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
                   title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setTextColor(TITLE);
                   title.setOnClickListener(v -> showBreedDetail(breed));
@@ -696,8 +736,8 @@ jobs:
 
                   Button fav = new Button(this);
                   fav.setAllCaps(false);
-                  fav.setText(favorite ? "★" : "☆");
-                  fav.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                  fav.setText(favorite ? "★ Lagret" : "☆ Favoritt");
+                  fav.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                   fav.setBackground(makeRounded(GOLD, 18, GOLD_BORDER, 2));
                   fav.setTextColor(Color.parseColor("#8A5B00"));
                   fav.setOnClickListener(v -> {
@@ -711,36 +751,19 @@ jobs:
                   LinearLayout imageHolder = new LinearLayout(this);
                   imageHolder.setOrientation(LinearLayout.VERTICAL);
                   imageHolder.setGravity(Gravity.CENTER);
-                  imageHolder.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 18, BORDER, 2));
-                  imageHolder.setPadding(dp(12), dp(20), dp(12), dp(20));
+                  imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
+                  imageHolder.setPadding(dp(12), dp(28), dp(12), dp(28));
                   LinearLayout.LayoutParams imgLp = matchWrap(0);
-                  imgLp.topMargin = dp(12);
+                  imgLp.topMargin = dp(14);
                   imageHolder.setLayoutParams(imgLp);
 
                   TextView bunny = new TextView(this);
                   bunny.setText("🐇");
-                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 40);
                   bunny.setGravity(Gravity.CENTER);
                   imageHolder.addView(bunny);
 
-                  TextView imgText = new TextView(this);
-                  imgText.setText("Bildeplassholder for " + breed.name);
-                  imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                  imgText.setTextColor(TEXT);
-                  imgText.setPadding(0, dp(8), 0, 0);
-                  imageHolder.addView(imgText);
-
                   card.addView(imageHolder);
-
-                  Button details = new Button(this);
-                  details.setText("Åpne detaljside");
-                  details.setAllCaps(false);
-                  details.setBackground(makeRounded(Color.parseColor("#F7F1EB"), 16, BORDER, 2));
-                  details.setTextColor(TITLE);
-                  LinearLayout.LayoutParams detailsLp = matchWrap(0);
-                  detailsLp.topMargin = dp(10);
-                  card.addView(details, detailsLp);
-                  details.setOnClickListener(v -> showBreedDetail(breed));
 
                   addLabelValue(card, "Temperament", breed.temperament);
                   addLabelValue(card, "Vanlige farger", breed.colors);
@@ -750,10 +773,21 @@ jobs:
                   addBox(card, "Ulemper", breed.cons, PINK);
                   addBox(card, "Hva rasen krever", breed.needs, SAND);
 
+                  Button details = new Button(this);
+                  details.setText("Åpne detaljside →");
+                  details.setAllCaps(false);
+                  details.setBackground(makeRounded(CTA_BG, 18, BORDER, 2));
+                  details.setTextColor(TITLE);
+                  LinearLayout.LayoutParams detailsLp = matchWrap(0);
+                  detailsLp.topMargin = dp(14);
+                  card.addView(details, detailsLp);
+                  details.setOnClickListener(v -> showBreedDetail(breed));
+
                   return card;
               }
 
               private void showBreedDetail(RabbitBreed breed) {
+                  ScrollView scroll = new ScrollView(this);
                   LinearLayout wrapper = new LinearLayout(this);
                   wrapper.setOrientation(LinearLayout.VERTICAL);
                   wrapper.setPadding(dp(10), dp(10), dp(10), dp(10));
@@ -761,19 +795,19 @@ jobs:
                   LinearLayout imageHolder = new LinearLayout(this);
                   imageHolder.setOrientation(LinearLayout.VERTICAL);
                   imageHolder.setGravity(Gravity.CENTER);
-                  imageHolder.setBackground(makeRounded(Color.parseColor("#FFF6FB"), 18, BORDER, 2));
-                  imageHolder.setPadding(dp(12), dp(20), dp(12), dp(20));
+                  imageHolder.setBackground(makeRounded(IMAGE_BG, 22, BORDER, 2));
+                  imageHolder.setPadding(dp(12), dp(28), dp(12), dp(28));
 
                   TextView bunny = new TextView(this);
                   bunny.setText("🐇");
-                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38);
+                  bunny.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
                   bunny.setGravity(Gravity.CENTER);
                   imageHolder.addView(bunny);
 
                   TextView imgText = new TextView(this);
-                  imgText.setText("Bildeplassholder");
+                  imgText.setText("Bilde kommer i senere versjon");
                   imgText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                  imgText.setTextColor(TEXT);
+                  imgText.setTextColor(SOFT_TEXT);
                   imgText.setPadding(0, dp(8), 0, 0);
                   imageHolder.addView(imgText);
 
@@ -795,9 +829,11 @@ jobs:
                   info.setPadding(0, dp(14), 0, 0);
                   wrapper.addView(info);
 
+                  scroll.addView(wrapper);
+
                   new AlertDialog.Builder(this)
                           .setTitle(breed.name)
-                          .setView(wrapper)
+                          .setView(scroll)
                           .setPositiveButton("Lukk", null)
                           .show();
               }
@@ -838,7 +874,7 @@ jobs:
               private void addBox(LinearLayout parent, String titleText, String body, int bgColor) {
                   LinearLayout box = new LinearLayout(this);
                   box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 20, 0, 0));
+                  box.setBackground(makeRounded(bgColor, 22, 0, 0));
                   box.setPadding(dp(14), dp(14), dp(14), dp(14));
 
                   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -868,7 +904,7 @@ jobs:
               private void addInfoCard(String heading, String[] lines, int bgColor) {
                   LinearLayout box = new LinearLayout(this);
                   box.setOrientation(LinearLayout.VERTICAL);
-                  box.setBackground(makeRounded(bgColor, 24, BORDER, 0));
+                  box.setBackground(makeRounded(bgColor, 26, BORDER, 0));
                   box.setPadding(dp(16), dp(16), dp(16), dp(16));
 
                   TextView title = new TextView(this);
